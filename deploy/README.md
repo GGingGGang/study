@@ -130,3 +130,25 @@ git-sync 첫 클론 전엔 `/git/current` 가 없어 nginx 가 404 → readiness
 ### docsify 사이드바
 
 `loadSidebar: true` 라 `_sidebar.md` 가 목차 소스. 새 노트는 파일 추가 + `_sidebar.md` 링크. 누락 시 해당 문서는 직접 URL 로만 접근됨.
+
+## 6. IP 제한 (선택)
+
+`study.ggang.cloud` 만 특정 IP 로 제한. Istio `AuthorizationPolicy` 로 host 스코프 DENY. 매니페스트는 `../security/` 참조 (실제 CIDR 은 `*.local.yaml` 에 두고 git 추적 안 함).
+
+**전제 — 클라이언트 IP 보존**: 게이트웨이 svc 가 `externalTrafficPolicy: Cluster` 면 노드에서 SNAT 되어 Envoy 가 실 클라이언트 IP 를 못 본다(노드 IP 로 보임). OCI L4 LB 라 XFF 도 안 붙음. `Local` 로 전환 필수.
+
+```bash
+kubectl patch svc public-gateway-istio -n istio-system \
+  -p '{"spec":{"externalTrafficPolicy":"Local"}}'
+# Istio 가 되돌리면 PROXY protocol 또는 사전 생성 Service 로 대체
+```
+
+`Local` 은 **공유 게이트웨이 전체**(다른 host 포함)에 영향 + LB 헬스체크/노드 분산 거동 변경.
+
+```bash
+cp ../security/authorizationpolicy.example.yaml ../security/authorizationpolicy.local.yaml
+# notRemoteIpBlocks 를 허용 CIDR 로 수정 후
+kubectl apply -f ../security/authorizationpolicy.local.yaml
+```
+
+DENY + `notRemoteIpBlocks` = 허용 CIDR 외 전부 403. host 스코프라 다른 라우트 무영향. 매칭 안 되면 `remoteIpBlocks` 대신 `ipBlocks`(패킷 source) 로 시도.

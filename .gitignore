@@ -1,0 +1,2 @@
+# local-only manifests holding private values (real client IPs, etc.)
+*.local.yaml
