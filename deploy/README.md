@@ -72,13 +72,17 @@ md 만 바뀌는 콘텐츠 레포라 이미지 빌드/레지스트리가 과함.
 
 - `fsGroup: 65533` — `emptyDir` 를 git-sync 그룹 소유로. nginx 는 supplemental group 으로 group-readable 파일 읽음.
 - `runAsNonRoot`, `seccompProfile: RuntimeDefault`, `allowPrivilegeEscalation: false`, `capabilities: drop ALL` — restricted 요건 충족.
-- git-sync `readOnlyRootFilesystem: true` — 쓰기는 `/git` 볼륨 뿐.
+- git-sync `readOnlyRootFilesystem: true` — 쓰기는 `/git` 볼륨 + `/tmp`(emptyDir) 뿐. git-sync 는 HOME(`/tmp`)에 gitconfig 를 쓰므로 `/tmp` emptyDir 필수.
 
 ### HTTPRoute — https-wildcard attach
 
 `study.ggang.cloud` 를 `public-gateway` 의 `https-wildcard` listener 에 attach (cert SAN `*.ggang.cloud`). external-dns 가 hostname 으로 Cloudflare A 레코드 자동 생성. HTTP→HTTPS redirect 는 Gateway catch-all 처리.
 
 ## 5. 주의 사항
+
+### 이미지는 완전수식 (CRI-O)
+
+노드 런타임이 CRI-O 라 short name(`nginxinc/nginx-unprivileged:...`)을 거부한다(`short name mode is enforcing ... ambiguous`). 레지스트리를 명시(`docker.io/...`, `registry.k8s.io/...`)해야 한다. 모든 이미지에 적용.
 
 ### git-sync 버전 핀
 
