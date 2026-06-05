@@ -1,0 +1,2 @@
+- [홈](/)
+- [시작하기](notes/getting-started.md)
