@@ -19,68 +19,63 @@
     /* ===== 모바일 가로 넘침/양옆 잘림 방지 ===== */
     html, body { max-width: 100%; overflow-x: hidden; }
     .markdown-section { max-width: 100%; box-sizing: border-box; }
-    /* 표가 화면보다 넓으면 잘리지 말고 표 안에서 가로 스크롤 */
     .markdown-section table {
       display: block;
       width: 100%;
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
     }
-    /* 코드블록도 가로 스크롤 */
     .markdown-section pre { overflow-x: auto; }
-    /* 긴 영어 토큰(URL·식별자)이 화면 밖으로 삐져나가지 않게 */
     .markdown-section p,
     .markdown-section li,
     .markdown-section td,
     .markdown-section th { overflow-wrap: anywhere; word-break: break-word; }
 
     @media (max-width: 768px) {
-      /* 좌우 여백을 줄여 본문 폭 확보 (기본 vue 테마는 모바일에서 여백이 큼) */
       .markdown-section { padding: 16px 14px !important; }
       .content { left: 0 !important; }
     }
 
-    /* ===== 우측 하단 컨트롤(글씨 크기 + 캐시 비우기) ===== */
+    /* ===== 사이드바 상단 컨트롤(글씨 크기 + 캐시 비우기) ===== */
     #study-controls {
-      position: fixed;
-      right: 12px;
-      bottom: 12px;
-      z-index: 1000;
-      display: flex;
-      flex-direction: column;
+      display: none;               /* 사이드바에 삽입된 뒤 JS가 flex로 표시 */
+      align-items: center;
+      flex-wrap: wrap;
       gap: 8px;
-      align-items: flex-end;
+      padding: 12px 16px;
+      margin: 0;
+      border-bottom: 1px solid rgba(0, 0, 0, .08);
     }
-    #study-controls .row { display: flex; gap: 6px; }
     #study-controls button {
       color: #fff;
       background: #42b983;
       border: none;
       border-radius: 999px;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, .2);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, .15);
       cursor: pointer;
-      opacity: .9;
+      opacity: .92;
       transition: opacity .15s ease;
     }
     #study-controls button:hover { opacity: 1; }
     #study-controls button:active { transform: translateY(1px); }
     #study-controls .font-btn {
-      width: 40px; height: 40px;
-      font-size: 16px; font-weight: 700; line-height: 1;
+      width: 36px; height: 32px;
+      font-size: 15px; font-weight: 700; line-height: 1;
     }
-    #study-controls .font-btn.small { font-size: 13px; }
-    #clear-cache { padding: 8px 12px; font-size: 13px; line-height: 1; }
+    #study-controls .font-btn.small { font-size: 12px; }
+    #study-controls #clear-cache { padding: 7px 12px; font-size: 12px; line-height: 1; margin-left: auto; }
+    #study-controls .label { font-size: 12px; color: #7f8c8d; margin-right: 2px; }
   </style>
 </head>
 <body>
   <div id="app">로딩 중…</div>
 
+  <!-- 사이드바로 이동되는 컨트롤 (초기엔 숨김) -->
   <div id="study-controls">
-    <div class="row">
-      <button id="font-dec" class="font-btn small" title="글씨 작게">A−</button>
-      <button id="font-inc" class="font-btn" title="글씨 크게">A+</button>
-    </div>
-    <button id="clear-cache" title="캐시·스토리지를 비우고 새로고침합니다">🗑 캐시 비우기</button>
+    <span class="label">글씨</span>
+    <button id="font-dec" class="font-btn small" title="글씨 작게">A−</button>
+    <button id="font-inc" class="font-btn" title="글씨 크게">A+</button>
+    <button id="clear-cache" title="캐시·스토리지를 비우고 새로고침합니다">🗑 캐시</button>
   </div>
 
   <script>
@@ -97,16 +92,30 @@
       loadSidebar: true,
       subMaxLevel: 3,
       auto2top: true,
-      // .md 파일을 항상 서버에서 재확인(브라우저 캐시로 옛 내용 표시 방지)
-      requestHeaders: {
-        'cache-control': 'no-cache'
-      },
+      requestHeaders: { 'cache-control': 'no-cache' },
       search: {
-        // 검색 인덱스 localStorage 보관시간을 1시간으로 단축(기본 1일)
         maxAge: 1000 * 60 * 60,
         placeholder: '검색',
         noData: '검색 결과가 없습니다'
-      }
+      },
+      plugins: [
+        function (hook) {
+          // 컨트롤을 사이드바 최상단(앱 이름 아래)으로 이동
+          function mount() {
+            var sidebar = document.querySelector('.sidebar');
+            var controls = document.getElementById('study-controls');
+            if (!sidebar || !controls) return;
+            if (controls.parentElement !== sidebar) {
+              var anchor = sidebar.querySelector('.app-name');
+              if (anchor && anchor.nextSibling) sidebar.insertBefore(controls, anchor.nextSibling);
+              else sidebar.insertBefore(controls, sidebar.firstChild);
+            }
+            controls.style.display = 'flex';
+          }
+          hook.mounted(mount);
+          hook.doneEach(mount); // 라우팅 후에도 유지
+        }
+      ]
     }
   </script>
   <script src="https://cdn.jsdelivr.net/npm/docsify@4"></script>
@@ -118,10 +127,8 @@
   <script>
     (function () {
       var MIN = 12, MAX = 24, DEFAULT = 15;
-
       function getFont() {
-        var v = parseInt(
-          getComputedStyle(document.documentElement).getPropertyValue('--md-font'), 10);
+        var v = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--md-font'), 10);
         return (v >= MIN && v <= MAX) ? v : DEFAULT;
       }
       function setFont(px) {
@@ -129,37 +136,33 @@
         document.documentElement.style.setProperty('--md-font', px + 'px');
         try { localStorage.setItem('md-font', String(px)); } catch (e) {}
       }
-
-      var inc = document.getElementById('font-inc');
-      var dec = document.getElementById('font-dec');
-      if (inc) inc.addEventListener('click', function () { setFont(getFont() + 1); });
-      if (dec) dec.addEventListener('click', function () { setFont(getFont() - 1); });
-
-      var clear = document.getElementById('clear-cache');
-      if (clear) clear.addEventListener('click', async function () {
-        var prev = clear.textContent;
-        clear.textContent = '비우는 중…';
-        clear.disabled = true;
-        var keepFont = null;
-        try { keepFont = localStorage.getItem('md-font'); } catch (e) {}
-        try {
-          try { localStorage.clear(); } catch (e) {}
-          try { sessionStorage.clear(); } catch (e) {}
-          // 글씨 크기 설정은 유지
-          if (keepFont) { try { localStorage.setItem('md-font', keepFont); } catch (e) {} }
-          if (window.caches && caches.keys) {
-            var keys = await caches.keys();
-            await Promise.all(keys.map(function (k) { return caches.delete(k); }));
-          }
-          if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
-            var regs = await navigator.serviceWorker.getRegistrations();
-            await Promise.all(regs.map(function (r) { return r.unregister(); }));
-          }
-        } catch (e) { /* 무시하고 새로고침 */ }
-        var hash = window.location.hash;
-        var url = new URL(window.location.href);
-        url.searchParams.set('_', Date.now());
-        window.location.replace(url.pathname + url.search + hash);
+      document.addEventListener('click', async function (ev) {
+        var t = ev.target;
+        if (!t || t.tagName !== 'BUTTON') return;
+        if (t.id === 'font-inc') { setFont(getFont() + 1); return; }
+        if (t.id === 'font-dec') { setFont(getFont() - 1); return; }
+        if (t.id === 'clear-cache') {
+          t.disabled = true; t.textContent = '비우는 중…';
+          var keepFont = null;
+          try { keepFont = localStorage.getItem('md-font'); } catch (e) {}
+          try {
+            try { localStorage.clear(); } catch (e) {}
+            try { sessionStorage.clear(); } catch (e) {}
+            if (keepFont) { try { localStorage.setItem('md-font', keepFont); } catch (e) {} }
+            if (window.caches && caches.keys) {
+              var keys = await caches.keys();
+              await Promise.all(keys.map(function (k) { return caches.delete(k); }));
+            }
+            if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
+              var regs = await navigator.serviceWorker.getRegistrations();
+              await Promise.all(regs.map(function (r) { return r.unregister(); }));
+            }
+          } catch (e) { /* 무시하고 새로고침 */ }
+          var hash = window.location.hash;
+          var url = new URL(window.location.href);
+          url.searchParams.set('_', Date.now());
+          window.location.replace(url.pathname + url.search + hash);
+        }
       });
     })();
   </script>
