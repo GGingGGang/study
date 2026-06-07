@@ -118,7 +118,7 @@ spiffe://<trust-domain>/ns/<namespace>/sa/<service-account>
 
 ## 4. Ambient 모드에서의 mTLS — ztunnel
 
-사이드카 모드는 파드마다 Envoy가 mTLS를 한다. **Ambient 모드는 노드의 ztunnel이 L4 mTLS를 담당**한다.
+사이드카 모드는 파드마다 Envoy가 mTLS를 맡는다. **Ambient 모드는 노드의 ztunnel이 L4 mTLS를 담당**한다.
 
 ```
 [Ambient mTLS 경로]
@@ -131,7 +131,7 @@ spiffe://<trust-domain>/ns/<namespace>/sa/<service-account>
 
 - **ztunnel**(노드 데몬, Rust)이 워크로드의 SVID를 가지고 **노드 간 트래픽을 HBONE 터널로 mTLS 암호화**한다.
 - **HBONE(HTTP-Based Overlay Network Environment)**: mTLS로 보호된 HTTP/2 CONNECT 위에 원 트래픽을 캡슐화하는 방식.
-- 워크로드 신원(SPIFFE/SVID)·istiod CA의 발급·회전 구조는 **사이드카 모드와 동일**하다. 단지 mTLS를 **수행하는 주체가 파드별 Envoy → 노드별 ztunnel** 로 바뀐 것이다.
+- 워크로드 신원(SPIFFE/SVID)·istiod CA의 발급·회전 구조는 **사이드카 모드와 동일**하다. mTLS를 **수행하는 주체만 파드별 Envoy → 노드별 ztunnel** 로 바뀌었을 뿐이다.
 
 | 구분 | 사이드카 mTLS | Ambient mTLS |
 |------|--------------|--------------|
@@ -146,7 +146,7 @@ spiffe://<trust-domain>/ns/<namespace>/sa/<service-account>
 
 ### 5.1 액션 4종
 
-**AuthorizationPolicy** 는 워크로드에 도달한 요청을 **허용/거부**한다. `action` 은 네 가지다.
+**AuthorizationPolicy** 는 워크로드에 도달한 요청을 **허용/거부**한다. `action` 종류는 네 가지다.
 
 | action | 의미 |
 |--------|------|
@@ -157,7 +157,7 @@ spiffe://<trust-domain>/ns/<namespace>/sa/<service-account>
 
 ### 5.2 평가 순서와 deny-by-default
 
-여러 정책이 있을 때 평가 순서는 **CUSTOM → DENY → ALLOW** 다. 그리고 가장 중요한 규칙:
+여러 정책이 있을 때 평가 순서는 **CUSTOM → DENY → ALLOW** 다. 그리고 가장 중요한 규칙은 이것이다.
 
 > ★★★ **deny-by-default 면접 포인트**: **어떤 워크로드에 ALLOW 정책이 하나라도 적용되면, 그 정책에 매칭되지 않는 요청은 전부 거부**된다(allow-list 동작). 반대로 **그 워크로드에 적용되는 정책이 하나도 없으면 모두 허용**된다(기본 개방). 그래서 메시를 잠그려면 **빈 spec의 deny-all 정책**을 깔고 필요한 것만 ALLOW로 연다. "AuthorizationPolicy는 기본이 deny인가 allow인가?"의 정답은 **"정책이 없으면 allow, ALLOW 정책이 붙는 순간 그 워크로드는 deny-by-default가 된다"** 이다.
 
@@ -174,7 +174,7 @@ spec:
 
 ### 5.3 규칙 구성 — from / to / when
 
-ALLOW 규칙은 **source(from) · operation(to) · condition(when)** 3축으로 쓴다.
+ALLOW 규칙은 **source(from) · operation(to) · condition(when)** 세 축으로 쓴다.
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -214,7 +214,7 @@ spec:
 
 ## 6. RequestAuthentication — 최종 사용자 JWT 검증
 
-**RequestAuthentication** 은 요청에 담긴 **JWT를 검증**한다. 발급자(issuer)와 공개키(JWKS)를 지정하면, 메시가 토큰 서명·만료·issuer를 검증해 **유효하면 클레임을 추출**한다.
+**RequestAuthentication** 은 요청에 담긴 **JWT를 검증**한다. 발급자(issuer)와 공개키(JWKS)를 지정하면 메시가 토큰 서명·만료·issuer를 검증하고, **유효하면 클레임을 추출**한다.
 
 ```yaml
 apiVersion: security.istio.io/v1
