@@ -22,11 +22,11 @@ Istio의 트래픽 관리는 **"무엇을 어디로(routing)"** 와 **"목적지
 
 ### 1.1 라우팅 매칭의 우선순위
 
-VirtualService의 `http` 규칙은 **위에서 아래로 순서대로** 평가된다(첫 매칭 우선). 그래서 **구체적인 규칙(헤더/URI 매칭)을 위에, 기본 라우트(catch-all)를 맨 아래**에 둔다. 매칭은 `uri`(prefix/exact/regex), `headers`, `method`, `queryParams` 등으로 한다.
+VirtualService의 `http` 규칙은 **위에서 아래로 순서대로** 평가된다(첫 매칭 우선). 그래서 **구체적인 규칙(헤더/URI 매칭)은 위에, 기본 라우트(catch-all)는 맨 아래**에 둔다. 매칭에는 `uri`(prefix/exact/regex), `headers`, `method`, `queryParams` 등을 쓴다.
 
 ## 2. Gateway — 메시 경계 진입
 
-전통 Istio **Gateway** CRD는 메시 가장자리에서 외부 트래픽이 들어오는 **포트·프로토콜·호스트·TLS**를 정의한다. 단, Gateway 단독으로는 라우팅을 못 하고, **VirtualService를 그 Gateway에 바인딩**해야 실제로 트래픽이 흐른다.
+전통 Istio **Gateway** CRD는 메시 가장자리에서 외부 트래픽이 들어오는 **포트·프로토콜·호스트·TLS**를 정의한다. 단, Gateway 단독으로는 라우팅을 못 하므로 **VirtualService를 그 Gateway에 바인딩**해야 실제로 트래픽이 흐른다.
 
 ```yaml
 apiVersion: networking.istio.io/v1
