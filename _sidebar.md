@@ -36,3 +36,32 @@
   - [Ch6 — TCP and Attacks](notes/network_security/06-TCP-공격.md)
   - [Ch7 — DNS and Attacks](notes/network_security/07-DNS-공격.md)
   - [Ch13 — SDN (Software-Defined Networking)](notes/network_security/13-SDN.md)
+
+- 쿠버네티스 · 아키텍처 기준
+  - [00 — 일반 아키텍처 (MSA·플랫폼)](notes/kubernetes/00-아키텍처-일반.md)
+  - [01 — 내 레포 구조 (oci-always-free-k8s)](notes/kubernetes/01-아키텍처-내-레포-구조.md)
+
+- 쿠버네티스 · 인프라
+  - [02 — 기본기: 클러스터 아키텍처](notes/kubernetes/02-기본기-클러스터-아키텍처.md)
+  - [03 — 기본기: 워크로드와 리소스](notes/kubernetes/03-기본기-워크로드와-리소스.md)
+  - [04 — Gateway API: 철학과 아키텍처](notes/kubernetes/04-gateway-api-철학과-아키텍처.md)
+  - [05 — Gateway API: 기능 상세](notes/kubernetes/05-gateway-api-기능-상세.md)
+  - [06 — Istio: 개요와 아키텍처](notes/kubernetes/06-istio-개요와-아키텍처.md)
+  - [07 — Istio: 트래픽 관리](notes/kubernetes/07-istio-트래픽-관리.md)
+  - [08 — Istio: 보안 (mTLS·인가)](notes/kubernetes/08-istio-보안.md)
+  - [09 — Istio: Ambient와 관측성](notes/kubernetes/09-istio-ambient와-관측성.md)
+  - [10 — cert-manager (TLS 자동화)](notes/kubernetes/10-cert-manager.md)
+  - [11 — external-dns (DNS 자동화)](notes/kubernetes/11-external-dns.md)
+  - [12 — Prometheus (메트릭)](notes/kubernetes/12-prometheus.md)
+  - [13 — Loki (로그)](notes/kubernetes/13-loki.md)
+  - [14 — Grafana (시각화)](notes/kubernetes/14-grafana.md)
+  - [15 — Kiali (메시 콘솔)](notes/kubernetes/15-kiali.md)
+  - [16 — OpenBao (시크릿 관리)](notes/kubernetes/16-openbao.md)
+
+- 쿠버네티스 · GitOps
+  - [17 — GitOps: 철학과 원칙](notes/kubernetes/17-gitops-철학과-원칙.md)
+  - [18 — GitOps: 구현 패턴](notes/kubernetes/18-gitops-구현-패턴.md)
+  - [19 — ArgoCD (GitOps CD)](notes/kubernetes/19-argocd.md)
+
+- 쿠버네티스 · CI/CD
+  - [20 — Jenkins (CI)](notes/kubernetes/20-jenkins.md)
