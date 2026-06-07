@@ -104,13 +104,13 @@ TCP(비-HTTP) 트래픽은 별도 메트릭으로 본다.
 | `istio_tcp_connections_closed_total` | 닫힌 커넥션 수 |
 | `istio_tcp_sent_bytes_total` / `istio_tcp_received_bytes_total` | 송수신 바이트 |
 
-각 메트릭에는 **풍부한 라벨(차원)** 이 붙는다: `source_workload`, `destination_workload`, `destination_service`, `response_code`, `connection_security_policy`(mTLS 여부) 등. 이 라벨 덕분에 **"어느 서비스가 어느 서비스를 호출했고 그 결과는?"** 을 그래프로 재구성할 수 있다.
+각 메트릭에는 **풍부한 라벨(차원)** 이 붙는다. `source_workload`, `destination_workload`, `destination_service`, `response_code`, `connection_security_policy`(mTLS 여부) 등이다. 이 라벨 덕분에 **"어느 서비스가 어느 서비스를 호출했고 그 결과는?"** 을 그래프로 재구성한다.
 
 > ★★★ **관측성 면접 포인트**: Istio 메트릭의 핵심 가치는 **"애플리케이션 코드 한 줄 안 바꾸고 모든 서비스에 대해 동일한 RED 메트릭(+서비스 그래프용 라벨)"** 을 얻는 것이다. 라벨에 **source/destination workload가 들어가 서비스 간 호출 관계를 메트릭만으로 재구성**할 수 있다는 점이 표준 라이브러리 메트릭과의 결정적 차이다. Ambient에서는 **L4 메트릭은 ztunnel이, L7 상세 메트릭은 waypoint가** 만든다.
 
 ### 6.2 분산 트레이싱 전파 (B3 / W3C)
 
-분산 트레이싱은 한 요청이 여러 서비스를 거치는 **전체 경로(span의 트리)** 를 보여준다. Istio 데이터플레인은 span을 **생성·보고**하지만, **요청을 가로지르는 trace 컨텍스트(헤더) 전파는 애플리케이션의 협조가 필요**하다.
+분산 트레이싱은 한 요청이 여러 서비스를 거치는 **전체 경로(span의 트리)** 를 보여준다. Istio 데이터플레인은 span을 **생성·보고**하지만, **요청을 가로지르는 trace 컨텍스트(헤더) 전파는 애플리케이션이 협조해야** 한다.
 
 | 전파 포맷 | 헤더(예) | 비고 |
 |-----------|---------|------|
@@ -121,7 +121,7 @@ TCP(비-HTTP) 트래픽은 별도 메트릭으로 본다.
 
 ### 6.3 액세스 로그 (Access Logs)
 
-데이터플레인은 처리한 각 요청을 **액세스 로그**로 남길 수 있다. 메서드·경로·응답 코드·지연·업스트림·**연결 보안(mTLS 여부)** 등이 한 줄로 기록돼 디버깅의 1차 단서가 된다(기본은 비활성이거나 환경에 따라 다르므로 Telemetry/메시 설정으로 켠다).
+데이터플레인은 처리한 각 요청을 **액세스 로그**로 남긴다. 메서드·경로·응답 코드·지연·업스트림·**연결 보안(mTLS 여부)** 등이 한 줄로 기록돼 디버깅의 1차 단서가 된다(기본은 비활성이거나 환경에 따라 다르므로 Telemetry/메시 설정으로 켠다).
 
 ## 7. Telemetry API — 텔레메트리 제어
 
