@@ -15,3 +15,24 @@
   - [13주 2강 — 가설검정의 원리: 오류·유의수준·검정력·p값](notes/통계/13w2.md)
   - [14주 1강 — 모평균·비율·분산의 가설검정 + 짝비교 검정](notes/통계/14w1.md)
   - [14주 2강 — 범주형 자료 검정: 적합도 검정 · 독립성 검정](notes/통계/14w2.md)
+
+- 수학
+  - [면적분 (Surface Integrals)](notes/math/01-면적분.md)
+  - [회전 · 발산 · 발산정리 (Curl, Divergence, Divergence Theorem)](notes/math/02-회전-발산-발산정리.md)
+  - [Stokes 정리 (Stokes' Theorem)](notes/math/03-stokes정리.md)
+  - [푸리에 급수 (Fourier Series)](notes/math/04-푸리에급수.md)
+  - [푸리에 적분 (Fourier Integral)](notes/math/05-푸리에적분.md)
+  - [푸리에 변환 (Fourier Transform)](notes/math/06-푸리에변환.md)
+
+- 과학명저 — 코스모스
+  - [1~2장 (우주와 생명)](notes/과학명저/01-코스모스-1-2장.md)
+  - [3~4장 (우주관 · 지구)](notes/과학명저/02-코스모스-3-4장.md)
+  - [5~6장 (태양계 탐사)](notes/과학명저/03-코스모스-5-6장.md)
+  - [9~10장 (별의 삶과 죽음 · 우주의 시작과 끝)](notes/과학명저/04-코스모스-9-10장.md)
+  - [11장 (미래로 띄운 편지)](notes/과학명저/05-코스모스-11장.md)
+  - [통합 정리 (전체)](notes/과학명저/00-통합정리.md)
+
+- 네트워크 보안
+  - [Ch6 — TCP and Attacks](notes/network_security/06-TCP-공격.md)
+  - [Ch7 — DNS and Attacks](notes/network_security/07-DNS-공격.md)
+  - [Ch13 — SDN (Software-Defined Networking)](notes/network_security/13-SDN.md)
