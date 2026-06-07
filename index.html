@@ -13,32 +13,85 @@
   <!-- KaTeX 수식 스타일 -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
   <style>
-    /* 캐시 비우기 버튼 (우측 하단 고정) */
-    #clear-cache {
+    /* ===== 읽기 글씨 크기 (A+/A- 버튼으로 조절, 본문·표·목록에 적용) ===== */
+    .markdown-section { font-size: var(--md-font, 15px); }
+
+    /* ===== 모바일 가로 넘침/양옆 잘림 방지 ===== */
+    html, body { max-width: 100%; overflow-x: hidden; }
+    .markdown-section { max-width: 100%; box-sizing: border-box; }
+    /* 표가 화면보다 넓으면 잘리지 말고 표 안에서 가로 스크롤 */
+    .markdown-section table {
+      display: block;
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    /* 코드블록도 가로 스크롤 */
+    .markdown-section pre { overflow-x: auto; }
+    /* 긴 영어 토큰(URL·식별자)이 화면 밖으로 삐져나가지 않게 */
+    .markdown-section p,
+    .markdown-section li,
+    .markdown-section td,
+    .markdown-section th { overflow-wrap: anywhere; word-break: break-word; }
+
+    @media (max-width: 768px) {
+      /* 좌우 여백을 줄여 본문 폭 확보 (기본 vue 테마는 모바일에서 여백이 큼) */
+      .markdown-section { padding: 16px 14px !important; }
+      .content { left: 0 !important; }
+    }
+
+    /* ===== 우측 하단 컨트롤(글씨 크기 + 캐시 비우기) ===== */
+    #study-controls {
       position: fixed;
-      right: 16px;
-      bottom: 16px;
+      right: 12px;
+      bottom: 12px;
       z-index: 1000;
-      padding: 8px 12px;
-      font-size: 13px;
-      line-height: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: flex-end;
+    }
+    #study-controls .row { display: flex; gap: 6px; }
+    #study-controls button {
       color: #fff;
       background: #42b983;
       border: none;
-      border-radius: 20px;
+      border-radius: 999px;
       box-shadow: 0 2px 6px rgba(0, 0, 0, .2);
       cursor: pointer;
-      opacity: .85;
+      opacity: .9;
       transition: opacity .15s ease;
     }
-    #clear-cache:hover { opacity: 1; }
-    #clear-cache:active { transform: translateY(1px); }
+    #study-controls button:hover { opacity: 1; }
+    #study-controls button:active { transform: translateY(1px); }
+    #study-controls .font-btn {
+      width: 40px; height: 40px;
+      font-size: 16px; font-weight: 700; line-height: 1;
+    }
+    #study-controls .font-btn.small { font-size: 13px; }
+    #clear-cache { padding: 8px 12px; font-size: 13px; line-height: 1; }
   </style>
 </head>
 <body>
   <div id="app">로딩 중…</div>
-  <button id="clear-cache" title="캐시·스토리지를 비우고 새로고침합니다">🗑 캐시 비우기</button>
+
+  <div id="study-controls">
+    <div class="row">
+      <button id="font-dec" class="font-btn small" title="글씨 작게">A−</button>
+      <button id="font-inc" class="font-btn" title="글씨 크게">A+</button>
+    </div>
+    <button id="clear-cache" title="캐시·스토리지를 비우고 새로고침합니다">🗑 캐시 비우기</button>
+  </div>
+
   <script>
+    // 저장된 글씨 크기 먼저 적용(깜빡임 최소화)
+    (function () {
+      var px = parseInt(localStorage.getItem('md-font'), 10);
+      if (px >= 12 && px <= 24) {
+        document.documentElement.style.setProperty('--md-font', px + 'px');
+      }
+    })();
+
     window.$docsify = {
       name: 'study',
       loadSidebar: true,
@@ -60,33 +113,49 @@
   <script src="https://cdn.jsdelivr.net/npm/docsify@4/lib/plugins/search.min.js"></script>
   <!-- KaTeX: 인라인 $...$ , 디스플레이 $$...$$ 렌더 (markdown 파싱 전 수식 보호) -->
   <script src="https://cdn.jsdelivr.net/npm/docsify-katex@1.4.4/dist/docsify-katex.js"></script>
-  <!-- 캐시·스토리지 정리 버튼 동작 -->
+
+  <!-- 컨트롤 동작: 글씨 크기 + 캐시/스토리지 정리 -->
   <script>
     (function () {
-      var btn = document.getElementById('clear-cache');
-      if (!btn) return;
-      btn.addEventListener('click', async function () {
-        var prev = btn.textContent;
-        btn.textContent = '비우는 중…';
-        btn.disabled = true;
+      var MIN = 12, MAX = 24, DEFAULT = 15;
+
+      function getFont() {
+        var v = parseInt(
+          getComputedStyle(document.documentElement).getPropertyValue('--md-font'), 10);
+        return (v >= MIN && v <= MAX) ? v : DEFAULT;
+      }
+      function setFont(px) {
+        px = Math.min(MAX, Math.max(MIN, px));
+        document.documentElement.style.setProperty('--md-font', px + 'px');
+        try { localStorage.setItem('md-font', String(px)); } catch (e) {}
+      }
+
+      var inc = document.getElementById('font-inc');
+      var dec = document.getElementById('font-dec');
+      if (inc) inc.addEventListener('click', function () { setFont(getFont() + 1); });
+      if (dec) dec.addEventListener('click', function () { setFont(getFont() - 1); });
+
+      var clear = document.getElementById('clear-cache');
+      if (clear) clear.addEventListener('click', async function () {
+        var prev = clear.textContent;
+        clear.textContent = '비우는 중…';
+        clear.disabled = true;
+        var keepFont = null;
+        try { keepFont = localStorage.getItem('md-font'); } catch (e) {}
         try {
-          // 1) localStorage / sessionStorage (Docsify 검색 인덱스 등)
           try { localStorage.clear(); } catch (e) {}
           try { sessionStorage.clear(); } catch (e) {}
-          // 2) Cache Storage (PWA/서비스워커 캐시)
+          // 글씨 크기 설정은 유지
+          if (keepFont) { try { localStorage.setItem('md-font', keepFont); } catch (e) {} }
           if (window.caches && caches.keys) {
             var keys = await caches.keys();
             await Promise.all(keys.map(function (k) { return caches.delete(k); }));
           }
-          // 3) 등록된 서비스워커 해제
           if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
             var regs = await navigator.serviceWorker.getRegistrations();
             await Promise.all(regs.map(function (r) { return r.unregister(); }));
           }
-        } catch (e) {
-          /* 정리 중 오류는 무시하고 새로고침으로 진행 */
-        }
-        // 4) 캐시 우회 새로고침 (해시 라우팅은 보존, ?_= 로 강제 재요청)
+        } catch (e) { /* 무시하고 새로고침 */ }
         var hash = window.location.hash;
         var url = new URL(window.location.href);
         url.searchParams.set('_', Date.now());
