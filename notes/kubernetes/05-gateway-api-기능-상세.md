@@ -261,7 +261,7 @@ gRPC는 HTTP/2 기반이라 HTTPRoute로도 대충 되지만, **service/method �
 
 ## 6. Policy Attachment (정책 부착)
 
-라우팅 규칙으로 표현하기 애매한 **횡단 설정**(타임아웃, 재시도, 헬스체크, 보안 정책 등)은 **Policy Attachment** 패턴으로 붙인다. 별도 Policy 리소스가 `targetRef`로 대상(Gateway/Route/Service 등)을 가리켜 정책을 "부착"한다.
+라우팅 규칙으로 표현하기 애매한 **횡단 설정**(타임아웃, 재시도, 헬스체크, 보안 정책 등)은 **Policy Attachment** 패턴으로 붙인다. 별도 Policy 리소스가 `targetRef`로 대상(Gateway/Route/Service 등)을 가리켜 정책을 "부착"하는 식이다.
 
 - **방향성**: 보통 **상위(Gateway)에 붙으면 하위로 상속**되고, 하위(Route)에 더 구체적인 정책이 있으면 그게 우선(override)한다.
 - **두 갈래**: 일부 설정은 표준 필드로 흡수되는 중(예: HTTPRoute의 `timeouts`)이고, 그 외 벤더·확장 정책은 각 구현체(예: Istio)가 자체 Policy CRD로 제공한다.
@@ -270,7 +270,7 @@ gRPC는 HTTP/2 기반이라 HTTPRoute로도 대충 되지만, **service/method �
 
 ## 7. status / conditions 디버깅 ★★★
 
-Gateway API의 모든 리소스는 `.status.conditions` 와 (Route는) `.status.parents[]` 에 **실제 적용 결과**를 남긴다. "YAML은 apply 됐는데 트래픽이 안 간다" 류 문제는 거의 여기서 원인이 드러난다.
+Gateway API의 모든 리소스는 `.status.conditions` 와 (Route는) `.status.parents[]` 에 **실제 적용 결과**를 남긴다. "YAML은 apply 됐는데 트래픽이 안 간다" 류 문제는 원인이 거의 여기서 드러난다.
 
 | 리소스 | 주요 condition | True여야 정상 / False면 의미 |
 |--------|----------------|------------------------------|
@@ -280,7 +280,7 @@ Gateway API의 모든 리소스는 `.status.conditions` 와 (Route는) `.status.
 | **HTTPRoute (parents[])** | `Accepted` | Gateway에 **바인딩 성공**(parentRefs/allowedRoutes 합의됨) |
 | **HTTPRoute (parents[])** | `ResolvedRefs` | backendRefs(Service)가 **해소됨** |
 
-자주 보는 실패 신호:
+자주 보는 실패 신호는 다음과 같다.
 
 - `Accepted: False (NotAllowedByListeners)` → Gateway의 **allowedRoutes** 가 이 Route의 네임스페이스/종류를 막음(권한 위임 정책 문제).
 - `Accepted: False (NoMatchingParent / NoMatchingListenerHostname)` → `parentRefs`가 가리킨 리스너가 없거나 hostname 불일치.

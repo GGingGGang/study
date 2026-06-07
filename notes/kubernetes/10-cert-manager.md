@@ -99,7 +99,7 @@ spec:
 
 ## 5. 자동 갱신과 Ingress/Gateway 연동
 
-- **자동 갱신**: cert-manager는 만료 시점(기본값은 유효기간의 **2/3 경과 시**, Let's Encrypt 90일 기준 약 30일 전)에 자동으로 재발급해 같은 Secret을 갱신한다. 사람이 손댈 필요가 없다.
+- **자동 갱신**: cert-manager는 만료가 가까워지면(기본값은 유효기간의 **2/3 경과 시**, Let's Encrypt 90일 기준 약 30일 전) 자동으로 재발급해 같은 Secret을 갱신한다. 사람이 손댈 일이 없다.
 - **Ingress 연동(ingress-shim)**: Ingress에 `cert-manager.io/cluster-issuer: letsencrypt-prod` 어노테이션을 달고 `tls` 블록에 호스트·secretName을 적으면, cert-manager가 **Certificate를 자동 생성**해 준다.
 
 ```yaml

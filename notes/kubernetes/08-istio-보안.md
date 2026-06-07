@@ -22,7 +22,7 @@ Istio 보안은 세 가지 질문에 답한다.
 
 ### 2.1 원리
 
-일반 TLS는 **서버만** 인증서로 신원을 증명한다(클라이언트는 익명). **mTLS(상호 TLS)** 는 **양쪽 모두** 인증서로 신원을 증명한다. Istio는 메시 내 서비스 간 통신을 mTLS로 자동 보호해 **① 도청 방지(암호화) ② 양방향 신원 확인 ③ 변조 방지**를 동시에 얻는다.
+일반 TLS는 **서버만** 인증서로 신원을 증명한다(클라이언트는 익명). **mTLS(상호 TLS)** 는 **양쪽 모두** 인증서로 신원을 증명한다. Istio는 메시 내 서비스 간 통신을 mTLS로 자동 보호해 **① 도청 방지(암호화) ② 양방향 신원 확인 ③ 변조 방지**를 한꺼번에 얻는다.
 
 핵심은 이게 **애플리케이션 코드 변경 없이** 일어난다는 점이다. 평문으로 통신하던 두 서비스 사이에 프록시가 끼어들어 알아서 TLS 핸드셰이크를 하고 인증서를 검증한다.
 
@@ -51,7 +51,7 @@ spec:
 
 ### 2.3 적용 범위 (Scope)
 
-PeerAuthentication은 어디에 두느냐로 범위가 달라진다. **좁은 범위가 넓은 범위를 덮어쓴다(override).**
+PeerAuthentication은 어디에 두느냐에 따라 범위가 달라진다. **좁은 범위가 넓은 범위를 덮어쓴다(override).**
 
 | 범위 | 위치 / 셀렉터 |
 |------|---------------|
@@ -79,14 +79,14 @@ spec:
 
 ### 3.1 SPIFFE 신원
 
-mTLS가 "양쪽을 인증한다"고 할 때, 그 **신원이 무엇인지**를 정의하는 표준이 **SPIFFE(Secure Production Identity Framework For Everyone)** 다. Istio는 워크로드의 신원을 **SPIFFE ID** 라는 URI 형식으로 표현한다.
+mTLS가 "양쪽을 인증한다"고 할 때, 그 **신원이 무엇인지**를 정의하는 표준이 **SPIFFE(Secure Production Identity Framework For Everyone)** 다. Istio는 워크로드 신원을 **SPIFFE ID** 라는 URI 형식으로 표현한다.
 
 ```
 spiffe://<trust-domain>/ns/<namespace>/sa/<service-account>
 예) spiffe://cluster.local/ns/payments/sa/checkout
 ```
 
-즉 신원의 뿌리는 **쿠버네티스 서비스 어카운트(ServiceAccount)** 다. 같은 ServiceAccount로 뜬 파드는 같은 신원을 가진다.
+즉 신원의 뿌리는 **쿠버네티스 서비스 어카운트(ServiceAccount)** 다. 같은 ServiceAccount로 뜬 파드는 신원도 같다.
 
 > ★★★ **신원 면접 포인트**: Istio의 워크로드 신원은 **IP나 호스트명이 아니라 SPIFFE ID(= 서비스 어카운트 기반)** 다. IP는 파드가 재스케줄되면 바뀌고 위조될 수 있지만, SPIFFE 신원은 **암호학적으로 증명되는 인증서**에 담긴다. AuthorizationPolicy도 이 신원(principal)을 기준으로 "checkout 서비스만 payments를 호출 가능" 같은 규칙을 쓴다.
 
@@ -96,7 +96,7 @@ spiffe://<trust-domain>/ns/<namespace>/sa/<service-account>
 
 ### 3.3 istiod CA — 자동 발급·회전
 
-**istiod는 메시의 인증 기관(CA)** 역할을 한다. 인증서 발급·회전 흐름은 다음과 같다.
+**istiod는 메시의 인증 기관(CA)** 노릇을 한다. 인증서 발급·회전 흐름은 다음과 같다.
 
 ```
 워크로드(에이전트)가 키페어 생성 + CSR 작성

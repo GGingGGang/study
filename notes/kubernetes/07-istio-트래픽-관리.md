@@ -4,7 +4,7 @@
 
 ---
 
-이 문서는 우리 프로젝트가 채택한 **Istio Ambient 모드**를 기준으로 트래픽 관리를 다룬다. Ambient에서 L7 라우팅·리트라이·서킷 브레이커 같은 고급 기능은 해당 네임스페이스/서비스에 **waypoint 프록시(Envoy)** 가 배치돼 있을 때 적용된다. waypoint가 없으면 ztunnel이 L4(mTLS)만 처리하므로, 아래 VirtualService/DestinationRule의 L7 정책은 동작하지 않는다. 사이드카 모드는 비교용으로만 언급한다. 외부 노출은 Gateway API 기반으로 OCI NLB(네트워크 로드밸런서)를 거쳐 도메인 `ggang.cloud` 로 들어온다.
+이 문서는 우리 프로젝트가 채택한 **Istio Ambient 모드**를 기준으로 트래픽 관리를 다룬다. Ambient에서 L7 라우팅·리트라이·서킷 브레이커 같은 고급 기능은 해당 네임스페이스/서비스에 **waypoint 프록시(Envoy)** 가 배치돼 있어야 적용된다. waypoint가 없으면 ztunnel이 L4(mTLS)만 처리하므로, 아래 VirtualService/DestinationRule의 L7 정책은 동작하지 않는다. 사이드카 모드는 비교용으로만 언급한다. 외부 노출은 Gateway API 기반으로 OCI NLB(네트워크 로드밸런서)를 거쳐 도메인 `ggang.cloud` 로 들어온다.
 
 ## 1. 트래픽 관리 리소스 전체 지도
 
@@ -26,7 +26,7 @@ VirtualService의 `http` 규칙은 **위에서 아래로 순서대로** 평가�
 
 ## 2. Gateway — 메시 경계 진입
 
-전통 Istio **Gateway** CRD는 메시 가장자리에서 외부 트래픽이 들어오는 **포트·프로토콜·호스트·TLS**를 정의한다. 단, Gateway 단독으로는 라우팅을 못 하므로 **VirtualService를 그 Gateway에 바인딩**해야 실제로 트래픽이 흐른다.
+전통 Istio **Gateway** CRD는 메시 가장자리에서 외부 트래픽이 들어오는 **포트·프로토콜·호스트·TLS**를 정의한다. 단, Gateway 단독으로는 라우팅을 못 한다. **VirtualService를 그 Gateway에 바인딩**해야 비로소 트래픽이 흐른다.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -55,7 +55,7 @@ spec:
 
 ### 3.1 서브셋 정의 (DestinationRule)
 
-먼저 DestinationRule로 같은 서비스의 **버전 그룹(subset)** 을 라벨로 정의한다.
+먼저 DestinationRule로 같은 서비스 안의 **버전 그룹(subset)** 을 라벨로 정의한다.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -73,7 +73,7 @@ spec:
 
 ### 3.2 카나리 (가중치 분할)
 
-VirtualService에서 subset별 **weight 합 100**으로 트래픽 비율을 정한다. 90:10에서 시작해 점진적으로 v2 비중을 올리는 게 카나리다.
+VirtualService에서 subset별 **weight 합 100**으로 트래픽 비율을 정한다. 90:10에서 시작해 v2 비중을 차츰 올리는 게 카나리다.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -106,7 +106,7 @@ spec:
 
 ### 3.4 헤더 기반 라우팅과 결합한 안전한 카나리
 
-특정 헤더를 가진 **내부 테스터에게만 v2**를 보내고, 나머지는 v1로 가게 하면 "다크 런치" 형태의 안전한 검증이 된다.
+특정 헤더를 가진 **내부 테스터에게만 v2**를 보내고 나머지는 v1로 보내면, "다크 런치" 형태의 안전한 검증이 된다.
 
 ```yaml
 http:
@@ -121,7 +121,7 @@ http:
 
 ## 4. 헤더 / URI 기반 라우팅과 조작
 
-VirtualService는 매칭뿐 아니라 **요청/응답 헤더 조작**과 **URI rewrite, redirect**도 한다.
+VirtualService는 매칭뿐 아니라 **요청/응답 헤더 조작**과 **URI rewrite, redirect**까지 맡는다.
 
 ```yaml
 http:
@@ -142,7 +142,7 @@ http:
 
 ## 5. 타임아웃 (Timeout)
 
-요청이 무한정 대기해 리소스를 잡아먹지 않도록, 한 요청의 **최대 대기 시간**을 건다. 미설정 시 Istio 기본은 사실상 무제한(비활성)이므로 명시하는 게 좋다.
+요청이 무한정 대기해 리소스를 잡아먹지 않도록, 한 요청의 **최대 대기 시간**을 건다. 안 걸면 Istio 기본값이 사실상 무제한(비활성)이라 명시하는 게 좋다.
 
 ```yaml
 http:
@@ -155,7 +155,7 @@ http:
 
 ## 6. 리트라이 (Retry)
 
-일시적 실패(네트워크 흔들림, 5xx)에 대해 **자동 재시도**한다.
+일시적 실패(네트워크 흔들림, 5xx)를 만나면 **자동으로 재시도**한다.
 
 ```yaml
 http:
@@ -171,7 +171,7 @@ http:
 
 ## 7. 서킷 브레이커 (Circuit Breaker)
 
-서킷 브레이커는 **DestinationRule의 `trafficPolicy`** 에서 두 축으로 구성된다: **커넥션 풀 제한**(부하 자체를 막음)과 **outlier detection**(망가진 인스턴스를 풀에서 제거).
+서킷 브레이커는 **DestinationRule의 `trafficPolicy`** 에서 두 축으로 구성된다. 하나는 **커넥션 풀 제한**(부하 자체를 막음), 다른 하나는 **outlier detection**(망가진 인스턴스를 풀에서 제거)이다.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -203,7 +203,7 @@ spec:
 
 ## 8. 폴트 인젝션 (Fault Injection)
 
-장애를 **일부러 주입**해 시스템의 복원력(리트라이·타임아웃·서킷 브레이커가 제대로 동작하는지)을 테스트한다. 두 종류가 있다.
+장애를 **일부러 주입**해 시스템의 복원력(리트라이·타임아웃·서킷 브레이커가 제대로 동작하는지)을 테스트한다. 종류는 두 가지다.
 
 ```yaml
 http:
@@ -227,7 +227,7 @@ http:
 
 ## 9. 트래픽 미러링 (Mirroring / Shadow)
 
-운영 트래픽의 **복사본**을 새 버전에 보내되, **그 응답은 버린다(fire-and-forget)**. 실제 사용자에게는 영향 없이 신버전을 실 트래픽으로 테스트하는 방법이다.
+운영 트래픽의 **복사본**을 새 버전에 보내되, **그 응답은 버린다(fire-and-forget)**. 실제 사용자에게 영향을 주지 않고 신버전을 실 트래픽으로 테스트하는 방법이다.
 
 ```yaml
 http:
@@ -244,7 +244,7 @@ http:
 
 ## 10. ServiceEntry — 외부 서비스 편입
 
-기본적으로 메시는 클러스터 내부 서비스만 안다. **ServiceEntry**로 외부 API(예: 외부 결제 게이트웨이)를 **내부 레지스트리에 등록**하면, 그 외부 호출에도 타임아웃·리트라이·DestinationRule 같은 메시 정책을 적용할 수 있다.
+기본적으로 메시는 클러스터 내부 서비스만 안다. **ServiceEntry**로 외부 API(예: 외부 결제 게이트웨이)를 **내부 레지스트리에 등록**하면, 그 외부 호출에도 타임아웃·리트라이·DestinationRule 같은 메시 정책이 먹는다.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -265,7 +265,7 @@ spec:
 
 ## 11. 로케일리티 로드밸런싱 (Locality LB)
 
-멀티 리전/존 클러스터에서, 호출자와 **같은 존(zone)/리전의 엔드포인트를 우선** 선택해 지연과 비용을 줄이고, 그 존이 죽으면 **다른 존으로 자동 페일오버**한다.
+멀티 리전/존 클러스터에서 호출자와 **같은 존(zone)/리전의 엔드포인트를 우선** 골라 지연과 비용을 줄이고, 그 존이 죽으면 **다른 존으로 자동 페일오버**한다.
 
 ```yaml
 trafficPolicy:
@@ -285,7 +285,7 @@ trafficPolicy:
 
 ## 12. Sidecar 리소스 (참고 — 사이드카 모드 전용)
 
-**Sidecar** CRD는 사이드카 모드에서 각 Envoy가 **보는 서비스 범위를 좁혀** 메모리·설정 푸시 비용을 줄인다. 우리 프로젝트는 Ambient 모드라 직접 쓰지 않지만, 사이드카 모드의 확장성 한계를 이해하는 데 중요하다.
+**Sidecar** CRD는 사이드카 모드에서 각 Envoy가 **보는 서비스 범위를 좁혀** 메모리·설정 푸시 비용을 줄인다. 우리 프로젝트는 Ambient 모드라 직접 쓰지는 않지만, 사이드카 모드의 확장성 한계를 이해하려면 알아둘 만하다.
 
 > ★ 면접 포인트: 사이드카 모드에서 서비스가 많아지면 **모든 Envoy가 전체 서비스 설정을 받아** 메모리가 폭증한다. Sidecar 리소스의 `egress.hosts` 로 시야를 제한해 이를 완화한다. **Ambient 모드는 ztunnel이 노드 단위라 이 per-pod 설정 폭증 문제 자체가 줄어든다**는 게 Ambient의 장점 중 하나다.
 

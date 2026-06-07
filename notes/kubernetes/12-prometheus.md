@@ -13,7 +13,7 @@
 - **풀(pull) 방식**: Prometheus 서버가 정해진 주기로 대상(target)의 `/metrics` HTTP 엔드포인트에 직접 접속해 메트릭을 긁어온다(스크레이프, scrape). 대상이 서버로 밀어넣는(push) 게 아니다.
 - **다차원 시계열**: 모든 데이터는 `메트릭 이름 + 라벨(key=value) + 타임스탬프 + 값`으로 저장된다. 라벨로 같은 메트릭을 여러 차원(인스턴스·경로·상태코드 등)으로 쪼개 본다.
 
-직접 로그를 뒤지거나 사람이 그래프를 그리는 대신, Prometheus는 "어떤 지표가 어떤 추세인지"를 **PromQL로 질의**하고 **임계치를 넘으면 알림**을 보내는 데까지 자동화한다.
+사람이 로그를 뒤지거나 직접 그래프를 그리는 대신, Prometheus는 "어떤 지표가 어떤 추세인지"를 **PromQL로 질의**하고 **임계치를 넘으면 알림**을 보내는 데까지 자동화한다.
 
 ## 2. 풀(pull) 스크레이프 모델
 
@@ -24,7 +24,7 @@ Prometheus 서버 --(HTTP GET /metrics, 주기적)--> Target(앱/exporter)
 - 대상 앱은 **exporter** 또는 클라이언트 라이브러리로 `/metrics` 엔드포인트를 열어 현재 값을 **텍스트로 노출**만 한다. 누적·전송은 Prometheus가 책임진다.
 - 스크레이프 주기(`scrape_interval`, 보통 15~30초)마다 Prometheus가 긁어 자체 TSDB(시계열 DB)에 저장.
 - 직접 메트릭이 없는 시스템은 **exporter**로 변환: `node_exporter`(노드 CPU·메모리·디스크), `kube-state-metrics`(쿠버네티스 오브젝트 상태) 등.
-- 짧게 살다 죽는 배치 작업은 풀이 어렵다 → **Pushgateway**에 잠깐 밀어넣고 Prometheus가 그걸 긁는 예외 패턴을 쓴다.
+- 짧게 살다 죽는 배치 작업은 풀로 긁기 어렵다 → **Pushgateway**에 잠깐 밀어넣고 Prometheus가 그걸 긁는 예외 패턴을 쓴다.
 
 ★ "Prometheus는 왜 pull인가?"는 단골 질문이다. 대상의 **헬스 자체를 스크레이프 성공 여부(`up`)로 알 수 있고**, 누가 무엇을 긁는지 **중앙에서 통제**하기 쉬우며, 대상은 값을 노출만 하면 되니 단순하다.
 
@@ -38,7 +38,7 @@ http_requests_total{method="POST", handler="/api", status="500"} →  3     @tim
 ```
 
 - 같은 `http_requests_total`이라도 **라벨 조합이 다르면 별개의 시계열**이다.
-- 라벨이 다양할수록 차원 분석이 풍부해지지만, **라벨 값의 가짓수(cardinality)가 폭발하면** 시계열 수가 곱셈으로 늘어 메모리·저장이 터진다. → 사용자 ID, 요청 URL 전체처럼 **무한히 늘어나는 값은 라벨로 쓰지 않는다**. ★
+- 라벨이 다양할수록 차원 분석이 풍부해지지만, **라벨 값의 가짓수(cardinality)가 폭발하면** 시계열 수가 곱셈으로 늘어 메모리·저장이 터진다. → 사용자 ID, 요청 URL 전체처럼 **끝없이 늘어나는 값은 라벨로 쓰지 않는다**. ★
 
 ## 4. 메트릭 4종
 
@@ -49,7 +49,7 @@ http_requests_total{method="POST", handler="/api", status="500"} →  3     @tim
 | **Histogram** | 관측값을 **버킷(구간)별 누적 카운트**로 | `_bucket`/`_sum`/`_count` 생성, 서버측 분위수 계산 | 요청 지연 분포 |
 | **Summary** | 클라이언트가 **분위수(quantile)를 직접 계산** | 집계가 어려움(여러 인스턴스 합산 불가) | 분위수가 인스턴스 단위로 충분할 때 |
 
-★★★ Counter는 직접 보면 의미가 없고 **`rate()`로 초당 증가율**을 봐야 한다. 지연(latency)을 여러 인스턴스에 걸쳐 집계하려면 **Histogram**(서버측 `histogram_quantile()` 가능)이 Summary보다 유리하다.
+★★★ Counter는 값을 그대로 보면 의미가 없고 **`rate()`로 초당 증가율**을 봐야 한다. 지연(latency)을 여러 인스턴스에 걸쳐 집계하려면 **Histogram**(서버측 `histogram_quantile()` 가능)이 Summary보다 유리하다.
 
 ## 5. PromQL 기초
 
@@ -76,7 +76,7 @@ histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by 
 
 ## 6. 서비스 디스커버리
 
-대상이 동적으로 뜨고 사라지는 쿠버네티스에서는 스크레이프 대상을 **손으로 등록할 수 없다**. Prometheus는 **서비스 디스커버리(SD)**로 대상 목록을 자동 갱신한다.
+대상이 수시로 뜨고 사라지는 쿠버네티스에서는 스크레이프 대상을 **손으로 등록할 수 없다**. Prometheus는 **서비스 디스커버리(SD)**로 대상 목록을 자동으로 갱신한다.
 
 - `kubernetes_sd_config`로 Pod·Service·Endpoints·Node 등을 자동 발견.
 - `relabel_configs`로 발견된 메타데이터(라벨·어노테이션)를 보고 **어떤 대상을 긁을지·어떤 라벨을 붙일지**를 가공.
@@ -142,11 +142,11 @@ spec:
 
 - **레코딩 룰**: 자주 쓰는 무거운 표현식을 주기적으로 계산해 별도 시계열로 저장 → 대시보드·알럿이 빨라짐.
 - **알럿 룰**: 조건이 `for` 기간 동안 지속되면 Prometheus가 **Alertmanager**로 알림을 보낸다.
-- **Alertmanager**가 알림의 **그룹화·중복 제거(dedup)·억제(inhibition)·라우팅**을 맡아 Slack·Email·PagerDuty 등으로 전달. ★ Prometheus는 "발화"만, "누구에게 어떻게 보낼지"는 Alertmanager 담당이라는 역할 분리를 기억.
+- **Alertmanager**가 알림의 **그룹화·중복 제거(dedup)·억제(inhibition)·라우팅**을 맡아 Slack·Email·PagerDuty 등으로 전달한다. ★ Prometheus는 "발화"만 하고, "누구에게 어떻게 보낼지"는 Alertmanager가 맡는다는 역할 분리를 기억하자.
 
 ## 9. 보존·원격 쓰기 (한 줄)
 
-Prometheus 로컬 TSDB는 **보존 기간(`--storage.tsdb.retention.time`, 기본 15일)**이 지나면 데이터를 지운다. 장기 보관·전역 조회가 필요하면 **remote write**로 외부 저장소(Thanos·Mimir·Cortex 등)에 시계열을 보내 무제한 보존·수평 확장한다.
+Prometheus 로컬 TSDB는 **보존 기간(`--storage.tsdb.retention.time`, 기본 15일)**이 지나면 데이터를 지운다. 오래 보관하거나 전역으로 조회해야 하면 **remote write**로 외부 저장소(Thanos·Mimir·Cortex 등)에 시계열을 보내 무제한 보존·수평 확장한다.
 
 ## 10. 흔한 함정
 
