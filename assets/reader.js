@@ -1,10 +1,11 @@
 /*
- * 연속 읽기 (Continuous Reader)
- * - 사이드바 그룹(같은 <ul>) 안에서 현재 문서 앞뒤 문서를 이어 붙여
- *   최대 3문서(이전·현재·다음) 슬라이딩 윈도로 보여준다.
- * - 스크롤로 다음 문서가 이어지고, 두 칸 위 문서는 떨어져 나간다.
- *   현재 보고 있는 문서에 맞춰 사이드바 활성표시와 URL(해시)도 갱신한다.
+ * 무한 스크롤 읽기 (Infinite Scroll Reader)
+ * - 사이드바 그룹(같은 <ul>) 안에서, 아래로 스크롤해 현재 문서 끝에 닿으면
+ *   다음 문서를 이어 붙인다. 그룹 끝까지 계속(무한 스크롤).
+ * - 보고 있는 문서에 맞춰 사이드바 활성표시와 URL(해시)을 갱신하고,
+ *   우하단에 '현재/전체' 배지를 띄운다.
  * - 켜고 끄기: localStorage('reader-continuous') === 'off' 이면 비활성(기본 ON).
+ * - 동적으로 붙인 문서의 수식(KaTeX)도 다시 렌더한다.
  * - 모든 동작은 try/catch로 감싸 실패해도 기본 Docsify 동작을 해치지 않는다.
  */
 (function () {
@@ -30,7 +31,6 @@
     });
   }
 
-  // 동적으로 붙인 문서의 수식($...$, $$...$$)을 KaTeX로 렌더
   function renderMath(el) {
     if (typeof window.renderMathInElement === 'function') {
       try {
@@ -51,6 +51,13 @@
     var S = { seq: [], idx: -1, busy: false, loading: {}, bound: false };
 
     function section() { return document.querySelector('.markdown-section'); }
+
+    // 마크다운 -> HTML (Docsify 컴파일러 우선, 없으면 marked, 그래도 없으면 안내)
+    function compile(md) {
+      try { if (vm && vm.compiler && vm.compiler.compile) return vm.compiler.compile(md); } catch (e) {}
+      try { if (window.marked) return window.marked.parse ? window.marked.parse(md) : window.marked(md); } catch (e) {}
+      return '<p>(문서를 변환하지 못했습니다)</p>';
+    }
 
     // 현재 문서가 속한 사이드바 그룹(<ul>)의 링크들을 순서대로 수집
     function buildSeq() {
@@ -88,46 +95,48 @@
       });
     }
 
-    function makePanel(item, md) {
+    function makePanel(item) {
       var panel = document.createElement('div');
       panel.className = 'doc-panel';
       panel.setAttribute('data-seq', String(item.seqIndex));
       panel.setAttribute('data-href', item.href);
-      var html = '';
-      try { html = vm.compiler.compile(md); } catch (e) { html = '<p>(문서를 변환하지 못했습니다)</p>'; }
-      panel.innerHTML = '<div class="doc-divider"><span>▾ ' + esc(item.title) + '</span></div>' + html;
+      panel.innerHTML = '<div class="doc-divider"><span>▾ ' + esc(item.title) + '</span></div>' + compile(item.md);
       renderMath(panel);
       return panel;
     }
 
-    function appendIndex(i) {
+    // 다음 문서(아래)를 이어 붙인다
+    function appendIndex(i, chain) {
       if (i < 0 || i >= S.seq.length || S.busy || S.loading[i]) return;
       var sec = section(); if (!sec || sec.querySelector('.doc-panel[data-seq="' + i + '"]')) return;
       S.busy = true; S.loading[i] = true;
       var item = S.seq[i]; item.seqIndex = i;
       fetchMd(item.file).then(function (md) {
         var s = section(); if (!s) return;
-        s.appendChild(makePanel(item, md));
+        item.md = md;
+        s.appendChild(makePanel(item));
         updatePos();
-      }).catch(function () {}).then(function () { S.busy = false; S.loading[i] = false; });
+      }).catch(function () {}).then(function () {
+        S.busy = false; S.loading[i] = false;
+        // 짧은 문서라 아직 화면이 덜 찼으면 이어서 더 불러온다
+        if (chain !== false) setTimeout(function () { try { fill(); } catch (e) {} }, 0);
+      });
     }
 
-    function prependIndex(i) {
-      if (i < 0 || i >= S.seq.length || S.busy || S.loading[i]) return;
-      var sec = section(); if (!sec || sec.querySelector('.doc-panel[data-seq="' + i + '"]')) return;
-      S.busy = true; S.loading[i] = true;
-      var item = S.seq[i]; item.seqIndex = i;
-      fetchMd(item.file).then(function (md) {
-        var s = section(); if (!s) return;
-        var panel = makePanel(item, md);
-        s.insertBefore(panel, s.querySelector('.doc-panel'));
-        // 위에 문서가 추가됐으니 스크롤 위치를 그만큼 내려 화면이 튀지 않게 보정
-        window.scrollBy(0, panel.offsetHeight);
-        updatePos();
-      }).catch(function () {}).then(function () { S.busy = false; S.loading[i] = false; });
+    // 마지막 패널이 화면 근처까지 와 있으면 다음 문서를 불러온다
+    function fill() {
+      if (!S.seq.length || S.busy) return;
+      var sec = section(); if (!sec) return;
+      var panels = sec.querySelectorAll('.doc-panel');
+      if (!panels.length) return;
+      var last = panels[panels.length - 1];
+      var lastIdx = parseInt(last.getAttribute('data-seq'), 10);
+      if (lastIdx < S.seq.length - 1 && last.getBoundingClientRect().bottom < window.innerHeight + 1200) {
+        appendIndex(lastIdx + 1);
+      }
     }
 
-    // 화면 상단 1/3 지점에 걸린 패널을 '현재 문서'로 본다
+    // 화면 상단 1/3 지점에 걸린 패널을 '현재 문서'로 본다(스크롤 추적)
     function focusIndex() {
       var sec = section(); if (!sec) return S.idx;
       var panels = sec.querySelectorAll('.doc-panel');
@@ -160,30 +169,10 @@
       updatePos();
     }
 
-    // 현재 문서 기준 [이전·현재·다음]만 남기고 나머지는 제거 (윈도 크기 3)
-    function prune(f) {
-      var sec = section(); if (!sec) return;
-      var panels = Array.prototype.slice.call(sec.querySelectorAll('.doc-panel'));
-      for (var i = 0; i < panels.length; i++) {
-        var si = parseInt(panels[i].getAttribute('data-seq'), 10);
-        if (si < f - 1) { var h = panels[i].offsetHeight; panels[i].remove(); window.scrollBy(0, -h); }
-        else if (si > f + 1) { panels[i].remove(); }
-      }
-    }
-
     function onScroll() {
-      if (!S.seq.length) return;
-      var sec = section(); if (!sec) return;
-      var panels = sec.querySelectorAll('.doc-panel');
-      if (!panels.length) return;
-      var last = panels[panels.length - 1];
-      var lastIdx = parseInt(last.getAttribute('data-seq'), 10);
-      if (lastIdx < S.seq.length - 1 && last.getBoundingClientRect().bottom < window.innerHeight + 900) appendIndex(lastIdx + 1);
-      var first = panels[0];
-      var firstIdx = parseInt(first.getAttribute('data-seq'), 10);
-      if (firstIdx > 0 && first.getBoundingClientRect().top > -900) prependIndex(firstIdx - 1);
+      fill();
       var f = focusIndex();
-      if (f !== S.idx) { setFocus(f); prune(f); }
+      if (f !== S.idx) setFocus(f);
     }
 
     function updatePos() {
@@ -205,7 +194,7 @@
     }
 
     function reset() {
-      S.seq = []; S.idx = -1; S.loading = {};
+      S.seq = []; S.idx = -1; S.loading = {}; S.busy = false;
       var bar = document.getElementById('reader-pos'); if (bar) bar.style.display = 'none';
     }
 
@@ -224,9 +213,10 @@
         focus.setAttribute('data-href', S.seq[built.idx].href);
         while (sec.firstChild) focus.appendChild(sec.firstChild);
         sec.appendChild(focus);
-        appendIndex(built.idx + 1); // 다음 문서 미리 이어 붙임
         bind();
         updatePos();
+        // 다음 문서들을 화면이 찰 때까지 이어 붙임(이후는 스크롤로 무한 로드)
+        fill();
       } catch (e) {}
     });
   }
