@@ -64,7 +64,6 @@
     }
     #study-controls .font-btn.small { font-size: 12px; }
     #study-controls #clear-cache { padding: 7px 12px; font-size: 12px; line-height: 1; margin-left: auto; }
-    #study-controls #reader-toggle { padding: 7px 10px; font-size: 12px; line-height: 1; }
     #study-controls .label { font-size: 12px; color: #7f8c8d; margin-right: 2px; }
 
     /* ===== 사이드바 열고 닫는 토글: 좌측 상단 고정 ===== */
@@ -82,40 +81,7 @@
     /* 사이드바 제목이 토글 버튼과 겹치지 않게 살짝 띄움 */
     .sidebar .app-name { padding-left: 52px; }
 
-    /* ===== 연속 읽기: 문서 패널·분리선·현재 위치 배지 ===== */
-    .doc-divider {
-      margin: 10px 0 22px;
-      padding-top: 0;
-      border-top: 2px dashed #d0d7de;
-      text-align: center;
-    }
-    .doc-divider span {
-      display: inline-block;
-      transform: translateY(-50%);
-      background: #fff;
-      padding: 2px 14px;
-      font-size: 12px;
-      color: #7f8c8d;
-      border: 1px solid #e1e4e8;
-      border-radius: 999px;
-    }
-    .doc-panel--focus { } /* 현재 문서: 필요 시 강조용 훅 */
-    #reader-pos {
-      position: fixed;
-      right: 12px; bottom: 12px;
-      z-index: 20;
-      display: none;
-      padding: 4px 11px;
-      font-size: 12px; font-weight: 600;
-      color: #fff;
-      background: rgba(66, 185, 131, .92);
-      border-radius: 999px;
-      box-shadow: 0 1px 4px rgba(0, 0, 0, .2);
-      pointer-events: none;
-    }
-    #study-controls #draw-toggle { padding: 7px 10px; font-size: 12px; line-height: 1; }
-
-    /* ===== 펜 주석 오버레이: 캔버스 + 툴바 ===== */
+    /* ===== 글쓰기(펜 주석) 패널: 캔버스 + 항상 떠 있는 플로팅 툴바 ===== */
     #draw-canvas {
       position: absolute;
       z-index: 5;
@@ -126,32 +92,35 @@
       pointer-events: auto;       /* 그리기 모드에서만 입력 받음 */
       cursor: crosshair;
     }
+    /* 우하단에 항상 떠 있는 글쓰기 패널 — 펜 버튼으로 켜고 끔 */
     #draw-toolbar {
       position: fixed;
-      left: 50%;
-      bottom: 16px;
-      transform: translateX(-50%);
+      right: 14px; bottom: 14px;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       flex-wrap: wrap;
-      justify-content: center;
+      justify-content: flex-end;
       max-width: 94vw;
-      padding: 8px 12px;
+      padding: 6px;
       background: #ffffff;
       border: 1px solid #e1e4e8;
-      border-radius: 14px;
+      border-radius: 999px;
       box-shadow: 0 4px 18px rgba(0, 0, 0, .18);
       z-index: 60;
     }
+    #draw-toolbar.is-active { border-radius: 14px; }
+    /* 비활성: 펜 버튼만 보이고 도구는 숨김 */
+    #draw-toolbar .dt-tools { display: none; align-items: center; gap: 8px; flex-wrap: wrap; }
+    #draw-toolbar.is-active .dt-tools { display: flex; }
     #draw-toolbar .dt-group {
       display: flex; align-items: center; gap: 6px;
-      padding-right: 10px; border-right: 1px solid #eee;
+      padding-right: 8px; border-right: 1px solid #eee;
     }
     #draw-toolbar .dt-group:last-child { border-right: 0; padding-right: 0; }
     #draw-toolbar button {
-      min-width: 32px; height: 32px;
-      padding: 0 6px;
+      min-width: 34px; height: 34px;
+      padding: 0 7px;
       font-size: 15px; line-height: 1;
       background: #f4f6f8; color: #333;
       border: 1px solid #e1e4e8; border-radius: 8px;
@@ -159,6 +128,9 @@
     }
     #draw-toolbar button:hover { background: #eaeef1; }
     #draw-toolbar button.is-on { background: #42b983; color: #fff; border-color: #42b983; }
+    /* 펜(그리기 켜기) 버튼 */
+    #dt-power { border-radius: 50% !important; min-width: 42px; width: 42px; height: 42px; font-size: 18px; }
+    #draw-toolbar.is-active #dt-power { background: #42b983; color: #fff; border-color: #42b983; }
     #draw-toolbar .dt-color {
       width: 24px; height: 24px; min-width: 24px;
       padding: 0; border-radius: 50%; border: 2px solid #fff;
@@ -175,36 +147,36 @@
     <span class="label">글씨</span>
     <button id="font-dec" class="font-btn small" title="글씨 작게">A−</button>
     <button id="font-inc" class="font-btn" title="글씨 크게">A+</button>
-    <button id="reader-toggle" title="연속 읽기(폴더 그룹 단위 3문서 이어보기) 켜기/끄기">📖 연속</button>
-    <button id="draw-toggle" title="문서 위에 펜으로 필기">✏️ 그리기</button>
     <button id="clear-cache" title="캐시·스토리지를 비우고 새로고침합니다">🗑 캐시</button>
   </div>
 
-  <!-- 그리기 툴바 (그리기 모드일 때만 표시) -->
-  <div id="draw-toolbar" hidden>
-    <div class="dt-group">
-      <button data-draw-tool="pen" class="dt-tool is-on" title="펜">✏️</button>
-      <button data-draw-tool="hl" class="dt-tool" title="형광펜">🖍️</button>
-      <button data-draw-tool="eraser" class="dt-tool" title="지우개">🧽</button>
+  <!-- 글쓰기(펜 주석) 패널 — 항상 떠 있고, 펜 버튼으로 켜고 끔 -->
+  <div id="draw-toolbar">
+    <div class="dt-tools">
+      <div class="dt-group">
+        <button data-draw-tool="pen" class="dt-tool is-on" title="펜">✏️</button>
+        <button data-draw-tool="hl" class="dt-tool" title="형광펜">🖍️</button>
+        <button data-draw-tool="eraser" class="dt-tool" title="지우개">🧽</button>
+      </div>
+      <div class="dt-group">
+        <button class="dt-color is-on" data-draw-color="#e23b3b" style="background:#e23b3b" title="빨강"></button>
+        <button class="dt-color" data-draw-color="#2b6cff" style="background:#2b6cff" title="파랑"></button>
+        <button class="dt-color" data-draw-color="#2bb673" style="background:#2bb673" title="초록"></button>
+        <button class="dt-color" data-draw-color="#f5a623" style="background:#f5a623" title="노랑"></button>
+        <button class="dt-color" data-draw-color="#222222" style="background:#222" title="검정"></button>
+      </div>
+      <div class="dt-group">
+        <button data-draw-size="2" class="dt-size" title="가늘게">˙</button>
+        <button data-draw-size="4" class="dt-size is-on" title="보통">•</button>
+        <button data-draw-size="8" class="dt-size" title="굵게">●</button>
+      </div>
+      <div class="dt-group">
+        <button id="dt-undo" title="실행취소">↩</button>
+        <button id="dt-clear" title="이 문서 주석 지우기">🗑</button>
+        <button id="dt-png" title="PNG로 저장">💾</button>
+      </div>
     </div>
-    <div class="dt-group">
-      <button class="dt-color is-on" data-draw-color="#e23b3b" style="background:#e23b3b" title="빨강"></button>
-      <button class="dt-color" data-draw-color="#2b6cff" style="background:#2b6cff" title="파랑"></button>
-      <button class="dt-color" data-draw-color="#2bb673" style="background:#2bb673" title="초록"></button>
-      <button class="dt-color" data-draw-color="#f5a623" style="background:#f5a623" title="노랑"></button>
-      <button class="dt-color" data-draw-color="#222222" style="background:#222" title="검정"></button>
-    </div>
-    <div class="dt-group">
-      <button data-draw-size="2" class="dt-size" title="가늘게">˙</button>
-      <button data-draw-size="4" class="dt-size is-on" title="보통">•</button>
-      <button data-draw-size="8" class="dt-size" title="굵게">●</button>
-    </div>
-    <div class="dt-group">
-      <button id="dt-undo" title="실행취소">↩</button>
-      <button id="dt-clear" title="이 문서 주석 지우기">🗑</button>
-      <button id="dt-png" title="PNG로 저장">💾</button>
-      <button id="dt-close" title="그리기 닫기">✕</button>
-    </div>
+    <button id="dt-power" title="그리기 켜기/끄기">✏️</button>
   </div>
 
   <script>
@@ -240,14 +212,6 @@
               else sidebar.insertBefore(controls, sidebar.firstChild);
             }
             controls.style.display = 'flex';
-            // 연속 읽기 토글 라벨을 현재 상태로 표시
-            var rt = document.getElementById('reader-toggle');
-            if (rt) {
-              var off = false;
-              try { off = localStorage.getItem('reader-continuous') === 'off'; } catch (e) {}
-              rt.textContent = off ? '📖 연속 OFF' : '📖 연속 ON';
-              rt.style.opacity = off ? '.6' : '.92';
-            }
           }
           hook.mounted(mount);
           hook.doneEach(mount); // 라우팅 후에도 유지
@@ -255,15 +219,12 @@
       ]
     }
   </script>
-  <!-- 연속 읽기 · 펜 주석 플러그인 (docsify 로드 전에 등록) -->
-  <script src="assets/reader.js"></script>
+  <!-- 펜 주석(글쓰기 패널) 플러그인 (docsify 로드 전에 등록) -->
   <script src="assets/draw.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/docsify@4"></script>
   <script src="https://cdn.jsdelivr.net/npm/docsify@4/lib/plugins/search.min.js"></script>
   <!-- KaTeX: 인라인 $...$ , 디스플레이 $$...$$ 렌더 (markdown 파싱 전 수식 보호) -->
   <script src="https://cdn.jsdelivr.net/npm/docsify-katex@1.4.4/dist/docsify-katex.js"></script>
-  <!-- KaTeX auto-render: 연속 읽기로 이어붙인 문서의 수식 렌더에 사용 -->
-  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
 
   <!-- 컨트롤 동작: 글씨 크기 + 캐시/스토리지 정리 -->
   <script>
@@ -283,16 +244,6 @@
         if (!t || t.tagName !== 'BUTTON') return;
         if (t.id === 'font-inc') { setFont(getFont() + 1); return; }
         if (t.id === 'font-dec') { setFont(getFont() - 1); return; }
-        if (t.id === 'reader-toggle') {
-          var off = false;
-          try { off = localStorage.getItem('reader-continuous') === 'off'; } catch (e) {}
-          try {
-            if (off) localStorage.removeItem('reader-continuous');
-            else localStorage.setItem('reader-continuous', 'off');
-          } catch (e) {}
-          location.reload();
-          return;
-        }
         if (t.id === 'clear-cache') {
           t.disabled = true; t.textContent = '비우는 중…';
           var keepFont = null;

@@ -4,7 +4,6 @@
  * - 문서별(현재 라우트 기준)로 localStorage('draw:<경로>')에 벡터 스트로크 저장 → 다시 방문하면 복원.
  * - PNG 내보내기(필요 시 html2canvas를 lazy-load, 실패하면 주석 레이어만 저장).
  * - 모든 동작은 try/catch로 감싸 기본 Docsify 동작을 해치지 않는다.
- * - 참고: 연속 읽기로 위쪽 문서가 추가되면 좌표가 밀릴 수 있어, 집중 필기 시 연속 읽기 OFF 권장.
  */
 (function () {
   'use strict';
@@ -173,9 +172,7 @@
     var cv = ensureCanvas();
     if (cv) cv.classList.toggle('is-active', on);
     var tb = document.getElementById('draw-toolbar');
-    if (tb) tb.hidden = !on;
-    var btn = document.getElementById('draw-toggle');
-    if (btn) { btn.style.opacity = on ? '1' : '.92'; btn.textContent = on ? '✏️ 그리기 ON' : '✏️ 그리기'; }
+    if (tb) tb.classList.toggle('is-active', on);
     if (on) { load(); sizeCanvas(); }
   }
 
@@ -230,10 +227,9 @@
 
   function wireToolbar() {
     document.addEventListener('click', function (e) {
-      var t = e.target.closest ? e.target.closest('[data-draw-tool],[data-draw-color],[data-draw-size],#dt-undo,#dt-clear,#dt-png,#dt-close,#draw-toggle') : null;
+      var t = e.target.closest ? e.target.closest('[data-draw-tool],[data-draw-color],[data-draw-size],#dt-undo,#dt-clear,#dt-png,#dt-power') : null;
       if (!t) return;
-      if (t.id === 'draw-toggle') { setActive(!state.active); return; }
-      if (t.id === 'dt-close') { setActive(false); return; }
+      if (t.id === 'dt-power') { setActive(!state.active); return; }
       if (t.id === 'dt-undo') { undo(); return; }
       if (t.id === 'dt-clear') { if (confirm('이 문서의 주석을 모두 지울까요?')) clearAll(); return; }
       if (t.id === 'dt-png') { exportPng(); return; }
@@ -256,7 +252,7 @@
     hook.ready(function () { wireToolbar(); });
   }
 
-  // 콘텐츠 높이 변화(연속 읽기 패널 추가 등)·창 크기 변화에 맞춰 캔버스 재조정
+  // 콘텐츠 높이·창 크기 변화에 맞춰 캔버스 재조정
   window.addEventListener('resize', function () { try { if (state.canvas) sizeCanvas(); } catch (e) {} });
   if (window.ResizeObserver) {
     var ro = new ResizeObserver(function () { try { if (state.active && state.canvas) sizeCanvas(); } catch (e) {} });
