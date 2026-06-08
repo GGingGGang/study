@@ -64,7 +64,55 @@
     }
     #study-controls .font-btn.small { font-size: 12px; }
     #study-controls #clear-cache { padding: 7px 12px; font-size: 12px; line-height: 1; margin-left: auto; }
+    #study-controls #reader-toggle { padding: 7px 10px; font-size: 12px; line-height: 1; }
     #study-controls .label { font-size: 12px; color: #7f8c8d; margin-right: 2px; }
+
+    /* ===== 사이드바 열고 닫는 토글: 좌측 상단 고정 ===== */
+    .sidebar-toggle {
+      position: fixed;
+      top: 8px; left: 8px; bottom: auto;
+      width: 40px; height: 36px; padding: 9px;
+      background: #42b983;
+      border-radius: 8px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, .2);
+      z-index: 40;
+    }
+    .sidebar-toggle .sidebar-toggle-button span,
+    .sidebar-toggle span { background-color: #fff !important; }
+    /* 사이드바 제목이 토글 버튼과 겹치지 않게 살짝 띄움 */
+    .sidebar .app-name { padding-left: 52px; }
+
+    /* ===== 연속 읽기: 문서 패널·분리선·현재 위치 배지 ===== */
+    .doc-divider {
+      margin: 10px 0 22px;
+      padding-top: 0;
+      border-top: 2px dashed #d0d7de;
+      text-align: center;
+    }
+    .doc-divider span {
+      display: inline-block;
+      transform: translateY(-50%);
+      background: #fff;
+      padding: 2px 14px;
+      font-size: 12px;
+      color: #7f8c8d;
+      border: 1px solid #e1e4e8;
+      border-radius: 999px;
+    }
+    .doc-panel--focus { } /* 현재 문서: 필요 시 강조용 훅 */
+    #reader-pos {
+      position: fixed;
+      right: 12px; bottom: 12px;
+      z-index: 20;
+      display: none;
+      padding: 4px 11px;
+      font-size: 12px; font-weight: 600;
+      color: #fff;
+      background: rgba(66, 185, 131, .92);
+      border-radius: 999px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, .2);
+      pointer-events: none;
+    }
   </style>
 </head>
 <body>
@@ -75,6 +123,7 @@
     <span class="label">글씨</span>
     <button id="font-dec" class="font-btn small" title="글씨 작게">A−</button>
     <button id="font-inc" class="font-btn" title="글씨 크게">A+</button>
+    <button id="reader-toggle" title="연속 읽기(폴더 그룹 단위 3문서 이어보기) 켜기/끄기">📖 연속</button>
     <button id="clear-cache" title="캐시·스토리지를 비우고 새로고침합니다">🗑 캐시</button>
   </div>
 
@@ -111,6 +160,14 @@
               else sidebar.insertBefore(controls, sidebar.firstChild);
             }
             controls.style.display = 'flex';
+            // 연속 읽기 토글 라벨을 현재 상태로 표시
+            var rt = document.getElementById('reader-toggle');
+            if (rt) {
+              var off = false;
+              try { off = localStorage.getItem('reader-continuous') === 'off'; } catch (e) {}
+              rt.textContent = off ? '📖 연속 OFF' : '📖 연속 ON';
+              rt.style.opacity = off ? '.6' : '.92';
+            }
           }
           hook.mounted(mount);
           hook.doneEach(mount); // 라우팅 후에도 유지
@@ -118,10 +175,14 @@
       ]
     }
   </script>
+  <!-- 연속 읽기 플러그인 (docsify 로드 전에 등록) -->
+  <script src="assets/reader.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/docsify@4"></script>
   <script src="https://cdn.jsdelivr.net/npm/docsify@4/lib/plugins/search.min.js"></script>
   <!-- KaTeX: 인라인 $...$ , 디스플레이 $$...$$ 렌더 (markdown 파싱 전 수식 보호) -->
   <script src="https://cdn.jsdelivr.net/npm/docsify-katex@1.4.4/dist/docsify-katex.js"></script>
+  <!-- KaTeX auto-render: 연속 읽기로 이어붙인 문서의 수식 렌더에 사용 -->
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
 
   <!-- 컨트롤 동작: 글씨 크기 + 캐시/스토리지 정리 -->
   <script>
@@ -141,6 +202,16 @@
         if (!t || t.tagName !== 'BUTTON') return;
         if (t.id === 'font-inc') { setFont(getFont() + 1); return; }
         if (t.id === 'font-dec') { setFont(getFont() - 1); return; }
+        if (t.id === 'reader-toggle') {
+          var off = false;
+          try { off = localStorage.getItem('reader-continuous') === 'off'; } catch (e) {}
+          try {
+            if (off) localStorage.removeItem('reader-continuous');
+            else localStorage.setItem('reader-continuous', 'off');
+          } catch (e) {}
+          location.reload();
+          return;
+        }
         if (t.id === 'clear-cache') {
           t.disabled = true; t.textContent = '비우는 중…';
           var keepFont = null;
