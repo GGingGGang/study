@@ -2,6 +2,7 @@
 - [시작하기](notes/getting-started.md)
 
 - 통계
+  - [📌 통합 정리 (9~14주 핵심 요약)](notes/통계/00-통합정리.md)
   - [9주 1강 — 기하분포 · 음의 이항분포 · 균등분포](notes/통계/9w1.md)
   - [9주 2강 — 자연상수 e · 지수분포 · 감마분포](notes/통계/9w2.md)
   - [10주 1강 — 정규분포 (Normal Distribution)](notes/통계/10w1.md)
