@@ -1,11 +1,11 @@
 /*
  * 무한 스크롤 읽기 (Infinite Scroll Reader)
- * - 사이드바 그룹(같은 <ul>) 안에서, 아래로 스크롤해 현재 문서 끝에 닿으면
- *   다음 문서를 이어 붙인다. 그룹 끝까지 계속(무한 스크롤).
- * - 보고 있는 문서에 맞춰 사이드바 활성표시와 URL(해시)을 갱신하고,
- *   우하단에 '현재/전체' 배지를 띄운다.
+ * - _sidebar.md를 파싱해 "그룹(같은 묶음)" 단위 문서 순서를 만든다(사이드바 DOM에 의존하지 않음).
+ * - 아래로 스크롤해 현재 문서 끝에 닿으면 다음 문서를 이어 붙인다. 그룹 끝까지 계속(무한 스크롤).
+ * - 현재 문서를 연 직후 '다음 문서'를 미리 한 편 붙여 자연스럽게 이어지게 한다.
+ * - 보고 있는 위치에 맞춰 사이드바 활성표시·URL(해시)·우하단 배지(현재/전체)를 갱신한다.
  * - 켜고 끄기: localStorage('reader-continuous') === 'off' 이면 비활성(기본 ON).
- * - 동적으로 붙인 문서의 수식(KaTeX)도 다시 렌더한다.
+ * - 디버그 로그: localStorage.setItem('reader-debug','1') 후 콘솔 확인.
  * - 모든 동작은 try/catch로 감싸 실패해도 기본 Docsify 동작을 해치지 않는다.
  */
 (function () {
@@ -13,24 +13,21 @@
 
   var KEY = 'reader-continuous';
   function enabled() { try { return localStorage.getItem(KEY) !== 'off'; } catch (e) { return true; } }
-
-  // 해시/href를 비교용 경로로 정규화: '#/notes/a.md?id=x' -> 'notes/a'
-  function norm(h) {
-    try { h = decodeURIComponent(h); } catch (e) {}
-    return h.replace(/^#/, '').replace(/^\//, '').split('?')[0].replace(/\.md$/i, '').replace(/\/$/, '');
+  function dbg() {
+    try { if (localStorage.getItem('reader-debug') === '1') console.log.apply(console, ['[reader]'].concat([].slice.call(arguments))); } catch (e) {}
   }
-  // 사이드바 href -> fetch용 파일 경로: '#/notes/a' -> 'notes/a.md'
-  function hrefToFile(href) {
-    var p = href.replace(/^#\//, '').split('?')[0];
-    if (!/\.md$/i.test(p)) p += '.md';
-    return p;
+
+  // 파일 경로 정규화(앞 슬래시·.md·URL 인코딩 제거) -> 비교용 키
+  function normFile(f) {
+    if (!f) return '';
+    try { f = decodeURIComponent(f); } catch (e) {}
+    return f.replace(/^\//, '').replace(/\.md$/i, '').replace(/\/$/, '');
   }
   function esc(s) {
     return String(s).replace(/[&<>"]/g, function (c) {
       return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c];
     });
   }
-
   function renderMath(el) {
     if (typeof window.renderMathInElement === 'function') {
       try {
@@ -47,45 +44,65 @@
     }
   }
 
+  // _sidebar.md 파싱: 최상위 '- ...'마다 새 그룹, 들여쓴 '- [제목](경로.md)'는 그 그룹의 멤버
+  function parseSidebar(text) {
+    var lines = text.split(/\r?\n/), groups = [], cur = null;
+    var linkRe = /\[([^\]]*)\]\(([^)]+)\)/;
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i];
+      if (/^-\s+/.test(line)) {                 // 최상위 항목 -> 새 그룹 시작
+        cur = []; groups.push(cur);
+        var m = linkRe.exec(line);
+        if (m && /\.md$/i.test(m[2])) cur.push(mkItem(m));
+      } else if (/^\s+-\s+/.test(line)) {       // 들여쓴 항목 -> 현재 그룹 멤버
+        var m2 = linkRe.exec(line);
+        if (m2 && cur && /\.md$/i.test(m2[2])) cur.push(mkItem(m2));
+      }
+    }
+    return groups;
+  }
+  function mkItem(m) {
+    var file = m[2].replace(/^\//, '').split('?')[0];
+    return { title: (m[1] || '').trim(), file: file, href: '#/' + file.replace(/\.md$/i, '') };
+  }
+
   function plugin(hook, vm) {
-    var S = { seq: [], idx: -1, busy: false, loading: {}, bound: false };
+    var S = { seq: [], idx: -1, busy: false, loading: {}, bound: false, token: 0 };
+    var groupsPromise = null;
 
     function section() { return document.querySelector('.markdown-section'); }
 
-    // 마크다운 -> HTML (Docsify 컴파일러 우선, 없으면 marked, 그래도 없으면 안내)
-    function compile(md) {
-      try { if (vm && vm.compiler && vm.compiler.compile) return vm.compiler.compile(md); } catch (e) {}
-      try { if (window.marked) return window.marked.parse ? window.marked.parse(md) : window.marked(md); } catch (e) {}
-      return '<p>(문서를 변환하지 못했습니다)</p>';
+    function getGroups() {
+      if (groupsPromise) return groupsPromise;
+      groupsPromise = fetch('_sidebar.md', { headers: { 'cache-control': 'no-cache' } })
+        .then(function (r) { if (!r.ok) throw new Error('sidebar ' + r.status); return r.text(); })
+        .then(parseSidebar)
+        .catch(function (e) { dbg('sidebar fetch 실패', e); groupsPromise = null; return []; });
+      return groupsPromise;
     }
 
-    // 현재 문서가 속한 사이드바 그룹(<ul>)의 링크들을 순서대로 수집
-    function buildSeq() {
-      var nav = document.querySelector('.sidebar-nav');
-      if (!nav) return null;
-      var cur = norm(location.hash);
-      var active = nav.querySelector('a.active');
-      if (!active) {
-        var all = nav.querySelectorAll('a');
-        for (var i = 0; i < all.length; i++) {
-          if (norm(all[i].getAttribute('href') || '') === cur) { active = all[i]; break; }
+    function currentFile() {
+      var f = (vm && vm.route && vm.route.file) ? vm.route.file : '';
+      if (!f) { // 폴백: 해시에서 추출
+        try { f = decodeURIComponent(location.hash).replace(/^#\//, '').split('?')[0]; } catch (e) {}
+        if (f && !/\.md$/i.test(f)) f += '.md';
+      }
+      return normFile(f);
+    }
+
+    function findGroup(groups, fileKey) {
+      for (var g = 0; g < groups.length; g++) {
+        for (var i = 0; i < groups[g].length; i++) {
+          if (normFile(groups[g][i].file) === fileKey) return { seq: groups[g], idx: i };
         }
       }
-      if (!active) return null;
-      var ul = active.closest('ul');
-      if (!ul) return null;
-      var links = ul.querySelectorAll(':scope > li > a');
-      var seq = [];
-      for (var j = 0; j < links.length; j++) {
-        var a = links[j];
-        var href = a.getAttribute('href') || '';
-        if (!/^#\//.test(href)) continue; // 외부/홈 링크 제외
-        seq.push({ href: href, file: hrefToFile(href), title: (a.textContent || '').trim(), el: a });
-      }
-      var idx = -1;
-      for (var k = 0; k < seq.length; k++) { if (norm(seq[k].href) === cur) { idx = k; break; } }
-      if (idx < 0) return null;
-      return { seq: seq, idx: idx };
+      return null;
+    }
+
+    function compile(md) {
+      try { if (vm && vm.compiler && vm.compiler.compile) return vm.compiler.compile(md); } catch (e) { dbg('compile 실패', e); }
+      try { if (window.marked) return window.marked.parse ? window.marked.parse(md) : window.marked(md); } catch (e) {}
+      return '<p>(문서를 변환하지 못했습니다)</p>';
     }
 
     function fetchMd(file) {
@@ -105,25 +122,26 @@
       return panel;
     }
 
-    // 다음 문서(아래)를 이어 붙인다
-    function appendIndex(i, chain) {
+    function appendIndex(i) {
       if (i < 0 || i >= S.seq.length || S.busy || S.loading[i]) return;
       var sec = section(); if (!sec || sec.querySelector('.doc-panel[data-seq="' + i + '"]')) return;
       S.busy = true; S.loading[i] = true;
+      var myToken = S.token;
       var item = S.seq[i]; item.seqIndex = i;
+      dbg('append', i, item.file);
       fetchMd(item.file).then(function (md) {
+        if (myToken !== S.token) return;       // 그새 라우트가 바뀌면 중단
         var s = section(); if (!s) return;
         item.md = md;
         s.appendChild(makePanel(item));
         updatePos();
-      }).catch(function () {}).then(function () {
+      }).catch(function (e) { dbg('append 실패', i, e); }).then(function () {
         S.busy = false; S.loading[i] = false;
-        // 짧은 문서라 아직 화면이 덜 찼으면 이어서 더 불러온다
-        if (chain !== false) setTimeout(function () { try { fill(); } catch (e) {} }, 0);
+        if (myToken === S.token) setTimeout(function () { try { fill(); } catch (e) {} }, 0);
       });
     }
 
-    // 마지막 패널이 화면 근처까지 와 있으면 다음 문서를 불러온다
+    // 마지막 패널이 화면 근처면 다음 문서를 불러온다
     function fill() {
       if (!S.seq.length || S.busy) return;
       var sec = section(); if (!sec) return;
@@ -136,7 +154,6 @@
       }
     }
 
-    // 화면 상단 1/3 지점에 걸린 패널을 '현재 문서'로 본다(스크롤 추적)
     function focusIndex() {
       var sec = section(); if (!sec) return S.idx;
       var panels = sec.querySelectorAll('.doc-panel');
@@ -146,6 +163,15 @@
         if (panels[i].getBoundingClientRect().top <= line) chosen = panels[i]; else break;
       }
       return chosen ? parseInt(chosen.getAttribute('data-seq'), 10) : S.idx;
+    }
+
+    function sidebarLinkFor(href) {
+      var nav = document.querySelector('.sidebar-nav'); if (!nav) return null;
+      var as = nav.querySelectorAll('a'); var key = normFile(href.replace(/^#\//, ''));
+      for (var i = 0; i < as.length; i++) {
+        if (normFile((as[i].getAttribute('href') || '').replace(/^#\//, '')) === key) return as[i];
+      }
+      return null;
     }
 
     function setFocus(i) {
@@ -159,13 +185,13 @@
       try {
         var nav = document.querySelector('.sidebar-nav');
         if (nav) {
-          var as = nav.querySelectorAll('a.active'); for (var q = 0; q < as.length; q++) as[q].classList.remove('active');
-          var lis = nav.querySelectorAll('li.active'); for (var w = 0; w < lis.length; w++) lis[w].classList.remove('active');
-          var el = S.seq[i].el;
+          var aA = nav.querySelectorAll('a.active'); for (var q = 0; q < aA.length; q++) aA[q].classList.remove('active');
+          var lA = nav.querySelectorAll('li.active'); for (var w = 0; w < lA.length; w++) lA[w].classList.remove('active');
+          var el = sidebarLinkFor(S.seq[i].href);
           if (el) { el.classList.add('active'); var li = el.closest('li'); if (li) li.classList.add('active'); }
         }
       } catch (e) {}
-      try { history.replaceState(null, '', S.seq[i].href); } catch (e) {} // 라우팅 없이 URL만 갱신
+      try { history.replaceState(null, '', S.seq[i].href); } catch (e) {}
       updatePos();
     }
 
@@ -194,30 +220,35 @@
     }
 
     function reset() {
-      S.seq = []; S.idx = -1; S.loading = {}; S.busy = false;
+      S.token++; S.seq = []; S.idx = -1; S.loading = {}; S.busy = false;
       var bar = document.getElementById('reader-pos'); if (bar) bar.style.display = 'none';
     }
 
     hook.doneEach(function () {
       reset();
-      if (!enabled()) return;
-      try {
-        var built = buildSeq();
-        if (!built || built.seq.length <= 1) return; // 그룹에 문서가 하나뿐이면 그대로
-        S.seq = built.seq; S.idx = built.idx;
+      if (!enabled()) { dbg('비활성(OFF)'); return; }
+      var fileKey = currentFile();
+      var myToken = S.token;
+      dbg('doneEach file=', fileKey);
+      getGroups().then(function (groups) {
+        if (myToken !== S.token) return;            // 그새 라우트 변경됨
+        var found = findGroup(groups, fileKey);
+        if (!found) { dbg('그룹 못 찾음', fileKey); return; }
+        if (found.seq.length <= 1) { dbg('그룹 문서 1개뿐'); return; }
+        S.seq = found.seq; S.idx = found.idx;
+        dbg('그룹 적용: idx', found.idx, '/ total', found.seq.length);
         var sec = section(); if (!sec) return;
         // 현재 문서를 패널로 감싼다(분리선 없음)
         var focus = document.createElement('div');
         focus.className = 'doc-panel doc-panel--focus';
-        focus.setAttribute('data-seq', String(built.idx));
-        focus.setAttribute('data-href', S.seq[built.idx].href);
+        focus.setAttribute('data-seq', String(found.idx));
+        focus.setAttribute('data-href', S.seq[found.idx].href);
         while (sec.firstChild) focus.appendChild(sec.firstChild);
         sec.appendChild(focus);
         bind();
         updatePos();
-        // 다음 문서들을 화면이 찰 때까지 이어 붙임(이후는 스크롤로 무한 로드)
-        fill();
-      } catch (e) {}
+        appendIndex(found.idx + 1);   // 다음 문서를 바로 이어 붙임
+      });
     });
   }
 
