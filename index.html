@@ -85,12 +85,12 @@
     #draw-canvas {
       position: absolute;
       z-index: 5;
-      pointer-events: none;       /* 평소엔 통과(읽기/선택 가능) */
-      touch-action: none;
+      pointer-events: none;       /* 평소엔 통과(읽기·스크롤·선택 가능) */
     }
     #draw-canvas.is-active {
-      pointer-events: auto;       /* 그리기 모드에서만 입력 받음 */
+      pointer-events: auto;       /* 그리기 ON일 때만 입력 받음 */
       cursor: crosshair;
+      touch-action: none;         /* 그릴 때만 스크롤 방지 */
     }
     /* 우하단에 항상 떠 있는 글쓰기 패널 — 펜 버튼으로 켜고 끔 */
     #draw-toolbar {
@@ -267,6 +267,27 @@
           window.location.replace(url.pathname + url.search + hash);
         }
       });
+    })();
+  </script>
+
+  <!-- 모바일: 본문을 터치하면 열려 있던 사이드바를 즉시 접는다 -->
+  <script>
+    (function () {
+      function sidebarOpen() {
+        var sb = document.querySelector('.sidebar');
+        if (!sb) return false;
+        var r = sb.getBoundingClientRect();
+        return r.right > 0 && r.left > -20;   // 화면 안에 보이면 열린 상태
+      }
+      function collapse(e) {
+        if (window.innerWidth > 768) return;            // 좁은 화면(모바일)에서만
+        var t = e.target;
+        if (t.closest('.sidebar') || t.closest('.sidebar-toggle') || t.closest('#draw-toolbar')) return;
+        if (sidebarOpen()) document.body.classList.add('close');
+      }
+      // 터치/클릭 모두에서 즉각 반응
+      document.addEventListener('touchstart', collapse, { capture: true, passive: true });
+      document.addEventListener('click', collapse, true);
     })();
   </script>
 </body>

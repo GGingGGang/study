@@ -247,6 +247,7 @@
         ensureCanvas();
         load();
         sizeCanvas();
+        setActive(false); // 페이지를 열 때는 항상 OFF(읽기)에서 시작
       } catch (e) {}
     });
     hook.ready(function () { wireToolbar(); });
