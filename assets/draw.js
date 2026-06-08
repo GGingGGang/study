@@ -173,6 +173,8 @@
     if (cv) cv.classList.toggle('is-active', on);
     var tb = document.getElementById('draw-toolbar');
     if (tb) tb.classList.toggle('is-active', on);
+    // 그리기 ON일 때 본문 텍스트 선택/드래그를 막는다
+    try { document.body.classList.toggle('drawing-active', on); } catch (e) {}
     if (on) { load(); sizeCanvas(); }
   }
 

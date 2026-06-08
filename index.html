@@ -92,6 +92,13 @@
       cursor: crosshair;
       touch-action: none;         /* 그릴 때만 스크롤 방지 */
     }
+    /* 그리기 ON 동안 본문 글자가 같이 드래그·선택되지 않게 */
+    body.drawing-active, body.drawing-active * {
+      -webkit-user-select: none !important;
+      -moz-user-select: none !important;
+      user-select: none !important;
+      -webkit-touch-callout: none !important;
+    }
     /* 우하단에 항상 떠 있는 글쓰기 패널 — 펜 버튼으로 켜고 끔 */
     #draw-toolbar {
       position: fixed;
