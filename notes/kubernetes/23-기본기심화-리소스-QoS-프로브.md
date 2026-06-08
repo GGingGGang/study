@@ -4,7 +4,7 @@
 
 ---
 
-이 문서는 "파드가 자원을 얼마나 쓰고, 살아있는지 어떻게 판단하며, 어떻게 죽는가"를 다룬다. 운영에서 가장 사고가 잦은 영역이라 함정 위주로 자체 완결 정리한다.
+이 문서는 "파드가 자원을 얼마나 쓰고, 살아있는지 어떻게 판단하며, 어떻게 죽는가"를 다룬다. 운영에서 사고가 가장 잦은 영역이라 함정 위주로 정리한다.
 
 ## 1. requests와 limits
 
@@ -35,7 +35,7 @@ spec:
 
 ### CPU throttling vs 메모리 OOMKilled (★★★ 핵심 차이)
 
-CPU와 메모리는 limit 초과 시 **동작이 완전히 다르다**.
+CPU와 메모리는 limit을 넘었을 때 **동작이 완전히 다르다**.
 
 | 자원 | 압축 가능? | limit 초과 시 |
 |------|-----------|--------------|
@@ -43,13 +43,13 @@ CPU와 메모리는 limit 초과 시 **동작이 완전히 다르다**.
 | **Memory** | incompressible(압축 불가) | **OOMKilled**: 컨테이너가 즉시 강제 종료(`exit 137`) |
 
 - **CPU throttling**: limit을 넘으면 커널 CFS가 컨테이너를 주기적으로 멈춘다(쓰로틀). 앱은 죽지 않지만 **지연(latency)이 급증**한다. p99 레이턴시가 튀는데 원인이 안 보이면 CPU throttle을 의심한다.
-- **OOMKilled**: 메모리는 회수할 수 없으므로, limit을 넘으면 커널 OOM killer가 컨테이너 프로세스를 죽인다. `kubectl describe pod`에 `Reason: OOMKilled`, 종료코드 137이 찍힌다. restartPolicy에 따라 재시작되며, 반복되면 `CrashLoopBackOff`.
+- **OOMKilled**: 메모리는 회수할 수 없어서, limit을 넘으면 커널 OOM killer가 컨테이너 프로세스를 죽인다. `kubectl describe pod`에 `Reason: OOMKilled`, 종료코드 137이 찍힌다. restartPolicy에 따라 재시작되고, 반복되면 `CrashLoopBackOff`로 떨어진다.
 
 > ★★★ **면접 단골**: "CPU는 compressible이라 limit 초과 시 throttle(느려짐), 메모리는 incompressible이라 OOMKilled(강제 종료)된다. 그래서 메모리 limit은 신중히 잡고, CPU limit은 레이턴시 민감 워크로드에선 빼거나 넉넉히 주기도 한다."
 
 ## 2. QoS 클래스와 eviction 순서
 
-requests/limits 설정 조합에 따라 쿠버네티스가 파드에 **QoS(Quality of Service) 클래스**를 자동 부여한다. 이 등급이 **노드 메모리 압박 시 누가 먼저 쫓겨나는가(eviction)** 를 결정한다.
+requests/limits를 어떻게 조합하느냐에 따라 쿠버네티스가 파드에 **QoS(Quality of Service) 클래스**를 자동으로 매긴다. 이 등급이 **노드 메모리가 압박받을 때 누가 먼저 쫓겨나는가(eviction)** 를 결정한다.
 
 | QoS | 조건 | eviction 우선순위 |
 |-----|------|------------------|
@@ -72,7 +72,7 @@ resources:
 
 ## 3. LimitRange와 ResourceQuota
 
-requests/limits를 **개별 파드가 알아서** 잡으면 누락·과다 설정이 생긴다. 네임스페이스 단위로 강제하는 두 장치가 있다.
+requests/limits를 **개별 파드가 알아서** 잡으면 누락하거나 과하게 잡는 일이 생긴다. 이를 네임스페이스 단위로 강제하는 두 장치가 있다.
 
 | 리소스 | 적용 단위 | 역할 |
 |--------|----------|------|
@@ -112,7 +112,7 @@ spec:
 
 ## 4. 프로브(Probe): liveness / readiness / startup
 
-kubelet이 컨테이너의 상태를 주기적으로 검사하는 헬스체크다. 세 종류가 **목적이 완전히 다르다**.
+kubelet이 컨테이너 상태를 주기적으로 검사하는 헬스체크다. 세 종류는 **목적이 완전히 다르다**.
 
 | 프로브 | 질문 | 실패 시 동작 |
 |--------|------|-------------|
@@ -175,7 +175,7 @@ spec:
 
 ## 6. Graceful Shutdown과 terminationGracePeriodSeconds
 
-파드가 종료될 때 갑자기 죽이지 않고 **정리할 시간**을 준다. 무중단 배포의 핵심이다.
+파드가 종료될 때 곧바로 죽이지 않고 **정리할 시간**을 준다. 무중단 배포의 핵심이다.
 
 ### 종료 시퀀스
 

@@ -4,11 +4,11 @@
 
 ---
 
-이 문서는 "누가 무엇을 할 수 있는가"를 다룬다. apiserver에 도달한 요청이 거부/허용되는 전 과정과, 파드가 API를 호출할 때 쓰는 신원(ServiceAccount)을 자체 완결로 정리한다.
+이 문서는 "누가 무엇을 할 수 있는가"를 다룬다. apiserver에 도달한 요청이 거부되거나 허용되는 전 과정과, 파드가 API를 호출할 때 쓰는 신원(ServiceAccount)을 한 편에 정리한다.
 
 ## 1. 인증(Authentication) → 인가(Authorization) → 어드미션 흐름
 
-kube-apiserver는 모든 요청에 대해 **세 관문**을 순서대로 통과시킨다.
+kube-apiserver는 모든 요청을 **세 관문**에 순서대로 통과시킨다.
 
 ```
 요청 ──▶ ① 인증(Authentication)  : "너 누구야?"   → 신원(user/group/SA) 확정
@@ -32,7 +32,7 @@ kube-apiserver는 모든 요청에 대해 **세 관문**을 순서대로 통과�
 
 ## 2. Role과 ClusterRole — "무엇을 할 수 있는가"
 
-**Role/ClusterRole** 은 권한의 묶음(규칙 집합)이다. 그 자체로는 누구에게도 적용되지 않고, 바인딩으로 주체에 연결돼야 효력이 생긴다.
+**Role/ClusterRole** 은 권한의 묶음(규칙 집합)이다. 그 자체로는 누구에게도 적용되지 않고, 바인딩으로 주체에 연결해야 효력이 생긴다.
 
 | 종류 | 적용 범위 | 쓰임 |
 |------|----------|------|
@@ -68,7 +68,7 @@ rules:
 | `create` / `update` / `patch` | 생성 / 전체 교체 / 부분 수정 |
 | `delete` / `deletecollection` | 삭제 / 일괄 삭제 |
 
-- **resourceNames**: 권한을 **특정 이름의 오브젝트로만** 좁힌다. 단, `list`/`create`/`deletecollection`처럼 이름이 요청에 없는 동작에는 적용되지 않는다는 점에 주의. ★
+- **resourceNames**: 권한을 **특정 이름의 오브젝트로만** 좁힌다. 단, `list`/`create`/`deletecollection`처럼 이름이 요청에 없는 동작에는 적용되지 않으니 주의한다. ★
 
 ```yaml
 # my-secret 이라는 이름의 Secret 하나만 읽기 허용
@@ -83,7 +83,7 @@ rules:
 
 ## 4. RoleBinding과 ClusterRoleBinding — "누구에게 줄 것인가"
 
-바인딩은 **주체(subject) ↔ 역할(role)** 을 연결한다. 주체는 `User`, `Group`, `ServiceAccount` 중 하나다.
+바인딩은 **주체(subject) ↔ 역할(role)** 을 잇는다. 주체는 `User`, `Group`, `ServiceAccount` 중 하나다.
 
 ### 범위 조합표 (가장 헷갈리는 부분)
 
@@ -144,7 +144,7 @@ spec:
 
 ## 6. Projected ServiceAccount 토큰 (1.24+)
 
-파드가 SA로 인증하려면 **토큰(JWT)** 이 필요하다. 이 토큰 발급 방식이 1.24 부근에서 크게 바뀌었다.
+파드가 SA로 인증하려면 **토큰(JWT)** 이 필요하다. 토큰 발급 방식은 1.24 부근에서 크게 바뀌었다.
 
 | 구분 | 과거(레거시) | 현재(권장) |
 |------|------------|-----------|
@@ -178,7 +178,7 @@ spec:
 
 ## 7. automountServiceAccountToken — 토큰 자동 주입 끄기
 
-기본적으로 파드에는 SA 토큰이 자동 마운트된다. 그런데 **apiserver를 호출하지 않는 파드**(대부분의 일반 앱)는 토큰이 불필요하다. 토큰이 있으면 컨테이너가 탈취당했을 때 공격자가 그 토큰으로 API를 찌를 수 있으므로, **필요 없으면 끄는 게 보안 모범 사례**다.
+기본적으로 파드에는 SA 토큰이 자동 마운트된다. 그런데 **apiserver를 호출하지 않는 파드**(대부분의 일반 앱)에는 토큰이 필요 없다. 토큰이 있으면 컨테이너가 탈취당했을 때 공격자가 그 토큰으로 API를 찌르므로, **필요 없으면 끄는 게 보안 모범 사례**다.
 
 ```yaml
 # SA 자체에 끄기 — 이 SA를 쓰는 파드 전부 적용
@@ -236,7 +236,7 @@ roleRef:
 
 ## 9. 검증: kubectl auth can-i
 
-권한을 줬는지/잘 막혔는지 **실제 인가 결과**를 확인하는 명령이다. RBAC 디버깅의 핵심 도구다.
+권한을 제대로 줬는지, 잘 막혔는지를 **실제 인가 결과**로 확인하는 명령이다. RBAC 디버깅의 핵심 도구다.
 
 ```bash
 # 내가 ggang-app NS에서 pod를 만들 수 있나?
@@ -250,7 +250,7 @@ kubectl auth can-i get secrets \
 kubectl auth can-i --list -n ggang-app
 ```
 
-- `--as`로 특정 사용자/SA를 **사칭(impersonate)** 해서 "이 SA가 이거 되나?"를 확인할 수 있다(사칭 권한 필요). 배포 전 권한 검증에 매우 유용하다. ★
+- `--as`로 특정 사용자/SA를 **사칭(impersonate)** 해서 "이 SA가 이거 되나?"를 확인한다(사칭 권한 필요). 배포 전 권한 검증에 매우 유용하다. ★
 - 출력은 `yes` / `no`로 단순명료하다.
 
 > ★★★ **면접 단골**: "RBAC가 의심되면 `kubectl auth can-i <verb> <resource> --as=system:serviceaccount:<ns>:<sa>`로 해당 SA의 인가 결과를 직접 확인한다. 추측하지 말고 apiserver의 판단을 물어본다."

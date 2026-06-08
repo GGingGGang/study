@@ -6,7 +6,7 @@
 
 ## 1. 가장 먼저 깔고 가는 설정 ★★★
 
-면접에서 "평소 어떻게 쓰냐"는 질문에 답이 되고, 실무 속도를 결정한다.
+면접에서 "평소 어떻게 쓰냐"는 질문에 바로 답이 되고, 실무 속도도 여기서 갈린다.
 
 ```bash
 # 1) 별칭 (~/.bashrc, ~/.zshrc)
@@ -19,7 +19,7 @@ complete -o default -F __start_kubectl k
 # 3) 현재 컨텍스트/네임스페이스를 프롬프트에 표시하고 싶으면 kube-ps1 같은 도구
 ```
 
-**`kubectl`은 `~/.kube/config`의 `current-context`가 가리키는 클러스터에 명령을 보낸다.** 사고의 90%는 "엉뚱한 클러스터/네임스페이스에 명령을 날린 것"이다. 무언가 하기 전에 **"내가 어디에 떠 있는지"부터 확인**하는 습관(아래 6번)이 가장 중요하다.
+**`kubectl`은 `~/.kube/config`의 `current-context`가 가리키는 클러스터로 명령을 보낸다.** 사고의 90%는 엉뚱한 클러스터나 네임스페이스에 명령을 날려서 생긴다. 뭘 하기 전에 **"내가 지금 어디에 떠 있는지"부터 확인**하는 습관(아래 6번)이 무엇보다 중요하다.
 
 ---
 
@@ -41,7 +41,7 @@ complete -o default -F __start_kubectl k
 | 모든 API 리소스 종류 | `k api-resources` |
 | 이 클러스터의 CRD 종류 확인 | `k api-resources \| grep -i gateway` |
 
-**`describe`는 디버깅의 출발점**이다. 맨 아래 `Events:` 섹션에 스케줄 실패·이미지 풀 실패·프로브 실패 같은 원인이 사람이 읽을 수 있는 문장으로 찍힌다. **`get -o yaml`은 "실제 적용된 최종 상태"** (디폴트 값·컨트롤러가 채운 필드 포함)를 본다.
+디버깅은 **`describe`에서 출발한다.** 맨 아래 `Events:` 섹션에 스케줄 실패, 이미지 풀 실패, 프로브 실패 같은 원인이 사람이 읽을 수 있는 문장으로 찍힌다. 반면 **`get -o yaml`은 실제 적용된 최종 상태**(디폴트 값과 컨트롤러가 채운 필드까지 포함)를 보여준다.
 
 ```bash
 # 자주 쓰는 조합: 죽은/이상한 파드만 빠르게
@@ -67,9 +67,9 @@ k get pods -A | grep -vE 'Running|Completed'
 | 파드 리소스 사용량 | `k top pod -A` (metrics-server 필요) |
 | 노드 리소스 사용량 | `k top node` |
 
-**`--previous`는 CrashLoopBackOff의 핵심 무기**다. 컨테이너가 계속 죽으면 현재 로그는 비어 있고, **직전에 죽은 인스턴스의 로그에 진짜 에러**가 있다.
+CrashLoopBackOff에는 **`--previous`가 핵심 무기다.** 컨테이너가 계속 죽으면 현재 로그는 비어 있고, **진짜 에러는 직전에 죽은 인스턴스의 로그**에 남는다.
 
-**`kubectl debug`는 distroless·셸 없는 이미지나 노드 자체를 디버깅**할 때 쓴다.
+distroless나 셸 없는 이미지, 또는 노드 자체를 디버깅할 때는 **`kubectl debug`를 쓴다.**
 
 ```bash
 # 실행 중인 파드에 임시 디버그 컨테이너(ephemeral container) 붙이기
@@ -98,9 +98,9 @@ k debug node/<node> -it --image=busybox
 | 이미지 교체 | `k set image deploy/<name> app=ghcr.io/ggang/app:v2` |
 | 조건부 스케일 | `k scale deploy/<name> --current-replicas=3 --replicas=5` |
 
-**`rollout restart`는 매니페스트 변경 없이 파드를 새로 생성**한다(템플릿 어노테이션에 타임스탬프를 박는 방식). ConfigMap/Secret을 바꿨는데 파드가 안 읽을 때, 캐시·커넥션을 갈아끼울 때 쓴다.
+**`rollout restart`는 매니페스트를 건드리지 않고 파드를 새로 생성한다**(템플릿 어노테이션에 타임스탬프를 박는 방식). ConfigMap이나 Secret을 바꿨는데 파드가 안 읽을 때, 캐시나 커넥션을 갈아끼울 때 쓴다.
 
-**`set image`로 배포하는 건 GitOps와 충돌**한다. ArgoCD가 Git을 진실로 보고 있으면 수동 `set image`는 곧 OutOfSync로 잡혀 되돌려진다. 실무에선 **Git 매니페스트의 태그를 바꾸고 ArgoCD가 동기화**하게 한다. `set image`는 응급·실험용으로만.
+**`set image`로 배포하면 GitOps와 충돌한다.** ArgoCD가 Git을 진실로 삼고 있으면 수동 `set image`는 곧 OutOfSync로 잡혀 되돌려진다. 그래서 실무에선 **Git 매니페스트의 태그를 바꾸고 ArgoCD가 동기화하게** 둔다. `set image`는 응급용, 실험용으로만 쓴다.
 
 ---
 
@@ -120,9 +120,9 @@ k debug node/<node> -it --image=busybox
 | 부분 패치(merge) | `k patch deploy/<name> -p '{"spec":{"replicas":4}}'` |
 | 즉석 편집 | `k edit deploy/<name>` |
 
-**`apply`는 선언형**이라 같은 파일을 여러 번 적용해도 멱등하다(내부적으로 server-side apply / last-applied 비교). 반면 `create`는 명령형이라 이미 있으면 에러난다. **실무는 거의 항상 `apply`.**
+**`apply`는 선언형**이라 같은 파일을 몇 번을 적용해도 멱등하다(내부적으로 server-side apply, last-applied 비교를 쓴다). 반면 `create`는 명령형이라 이미 있으면 에러를 낸다. **실무는 거의 항상 `apply`다.**
 
-**파드가 `Terminating`에서 안 빠질 때는 대개 finalizer 때문**이다. `--force`보다 finalizer 원인을 보는 게 정석이지만, 응급 시:
+**파드가 `Terminating`에서 안 빠질 때는 대개 finalizer 탓이다.** `--force`로 밀어붙이기보다 finalizer 원인을 보는 게 정석이지만, 응급 시엔 이렇게 한다.
 
 ```bash
 k get pod <name> -o yaml | grep -A3 finalizers
@@ -144,13 +144,13 @@ k patch pod <name> -p '{"metadata":{"finalizers":null}}'
 | 단발 네임스페이스 지정 | `-n <ns>` |
 | 전체 네임스페이스 | `-A` |
 
-OKE 같은 매니지드 클러스터를 여러 개 쓰면 컨텍스트가 늘어난다. **`kubens`/`kubectx`(또는 위 `set-context --current --namespace`)로 기본 네임스페이스를 고정**해두면 `-n`을 매번 안 쳐도 된다. **운영 클러스터에 실수로 명령을 날리는 사고는 거의 다 컨텍스트 확인 누락**이다.
+OKE 같은 매니지드 클러스터를 여러 개 쓰다 보면 컨텍스트가 금세 늘어난다. **`kubens`나 `kubectx`(또는 위 `set-context --current --namespace`)로 기본 네임스페이스를 고정**해두면 `-n`을 매번 칠 필요가 없다. **운영 클러스터에 실수로 명령을 날리는 사고는 거의 다 컨텍스트 확인을 빼먹어서 생긴다.**
 
 ---
 
 ## 7. 출력 가공 (jsonpath / custom-columns / sort-by) ★★
 
-스크립트·디버깅에서 필요한 값만 뽑을 때. 면접에서 "이미지 태그만 한 번에 뽑으려면?" 같은 응용 질문이 나온다.
+스크립트나 디버깅에서 필요한 값만 골라 뽑을 때 쓴다. 면접에서도 "이미지 태그만 한 번에 뽑으려면?" 같은 응용 질문이 나온다.
 
 ```bash
 # 특정 필드만: 모든 파드의 노드명
@@ -182,7 +182,7 @@ k get secret <name> -o jsonpath='{.data.password}' | base64 -d
 
 ## 8. explain / 스키마 탐색 ★★
 
-**필드 이름·구조가 기억 안 날 때 구글 대신 `explain`.** 클러스터에 설치된 실제 API 버전 기준이라 정확하다.
+**필드 이름이나 구조가 기억 안 날 때, 구글 검색 대신 `explain`을 친다.** 클러스터에 설치된 실제 API 버전을 기준으로 보여주니 정확하다.
 
 ```bash
 k explain pod.spec.containers.resources
@@ -201,13 +201,13 @@ k label pod <name> env-                  # 삭제(키 뒤에 -)
 k annotate ingress <name> kubernetes.io/ingress.class=nginx
 ```
 
-**라벨(label)은 셀렉터로 그룹핑·선택**하는 데(Service가 파드를 고르는 기준 등) 쓰고, **어노테이션(annotation)은 컨트롤러 설정·메타데이터**(cert-manager·external-dns 지시 등)를 담는다. 셀렉터에 쓸 수 있는 건 라벨뿐이다.
+**라벨(label)은 셀렉터로 그룹을 묶고 고를 때**(Service가 파드를 고르는 기준 같은) 쓰고, **어노테이션(annotation)에는 컨트롤러 설정이나 메타데이터**(cert-manager, external-dns 지시 등)를 담는다. 셀렉터에 쓸 수 있는 건 라벨뿐이다.
 
 ---
 
 ## 10. dry-run / 매니페스트 생성 ★★★
 
-**YAML을 맨손으로 안 짜고 골격을 뽑는 가장 빠른 방법.** 면접에서도 "파드 YAML 손으로 다 외우냐"에 대한 정답이다.
+**YAML을 맨손으로 짜지 않고 골격부터 뽑는 가장 빠른 방법이다.** 면접에서 "파드 YAML 손으로 다 외우냐"고 물으면 바로 이게 정답이다.
 
 ```bash
 # 서버에 적용하지 않고 검증만 (실제 API 검증까지)
@@ -245,7 +245,7 @@ k cp ./config.yaml <pod>:/etc/app/config.yaml
 k run tmp --rm -it --image=nicolaka/netshoot -- bash
 ```
 
-**`port-forward`는 Ingress/Gateway·LB 없이 클러스터 내부 서비스(ArgoCD·Grafana·Kiali 등 대시보드)에 직접 붙을 때** 1순위로 쓴다. 외부에 노출하지 않고 본인만 접근하므로 디버깅·관리용으로 안전하다.
+**Ingress나 Gateway, LB 없이 클러스터 내부 서비스(ArgoCD, Grafana, Kiali 같은 대시보드)에 직접 붙을 때 `port-forward`를** 1순위로 쓴다. 외부에 노출하지 않고 본인만 접근하니 디버깅이나 관리용으로 안전하다.
 
 ---
 
@@ -286,7 +286,7 @@ k get pods -A -o custom-columns='NS:.metadata.namespace,POD:.metadata.name,IMAGE
 ---
 
 ### 한 줄 요약
-kubectl 실력은 **`describe`로 이벤트를 읽고, `logs -f --previous`로 죽은 컨테이너를 추적하고, `rollout undo`로 되돌리고, `jsonpath`로 원하는 값만 뽑는** 손에서 나온다. 무엇보다 **명령 전에 컨텍스트·네임스페이스를 확인**하는 습관이 사고를 막고, **`--dry-run=client -o yaml`로 골격을 뽑는** 게 YAML 작성의 정석이다.
+kubectl 실력은 **`describe`로 이벤트를 읽고, `logs -f --previous`로 죽은 컨테이너를 쫓고, `rollout undo`로 되돌리고, `jsonpath`로 원하는 값만 뽑아내는** 손끝에서 나온다. 무엇보다 **명령 전에 컨텍스트와 네임스페이스를 확인하는** 습관이 사고를 막고, YAML은 **`--dry-run=client -o yaml`로 골격을 뽑는** 게 정석이다.
 
 ### 참고 (공식 문서)
 - kubectl Cheat Sheet — https://kubernetes.io/docs/reference/kubectl/cheatsheet/
