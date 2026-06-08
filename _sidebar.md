@@ -58,6 +58,12 @@
   - [15 — Kiali (메시 콘솔)](notes/kubernetes/15-kiali.md)
   - [16 — OpenBao (시크릿 관리)](notes/kubernetes/16-openbao.md)
 
+- 쿠버네티스 · 기본기 심화
+  - [21 — 스케줄링 (affinity·taint)](notes/kubernetes/21-기본기심화-스케줄링.md)
+  - [22 — RBAC와 ServiceAccount](notes/kubernetes/22-기본기심화-RBAC와-서비스어카운트.md)
+  - [23 — 리소스·QoS·프로브](notes/kubernetes/23-기본기심화-리소스-QoS-프로브.md)
+  - [24 — 오토스케일 (HPA·VPA)](notes/kubernetes/24-기본기심화-오토스케일.md)
+
 - 쿠버네티스 · GitOps
   - [17 — GitOps: 철학과 원칙](notes/kubernetes/17-gitops-철학과-원칙.md)
   - [18 — GitOps: 구현 패턴](notes/kubernetes/18-gitops-구현-패턴.md)
@@ -65,3 +71,8 @@
 
 - 쿠버네티스 · CI/CD
   - [20 — Jenkins (CI)](notes/kubernetes/20-jenkins.md)
+
+- 쿠버네티스 · 실전·취준
+  - [25 — kubectl 치트시트](notes/kubernetes/25-실전-kubectl-치트시트.md)
+  - [26 — 트러블슈팅 플레이북](notes/kubernetes/26-실전-트러블슈팅-플레이북.md)
+  - [27 — 면접 예상질문](notes/kubernetes/27-실전-면접-예상질문.md)
