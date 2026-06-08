@@ -113,6 +113,58 @@
       box-shadow: 0 1px 4px rgba(0, 0, 0, .2);
       pointer-events: none;
     }
+    #study-controls #draw-toggle { padding: 7px 10px; font-size: 12px; line-height: 1; }
+
+    /* ===== 펜 주석 오버레이: 캔버스 + 툴바 ===== */
+    #draw-canvas {
+      position: absolute;
+      z-index: 5;
+      pointer-events: none;       /* 평소엔 통과(읽기/선택 가능) */
+      touch-action: none;
+    }
+    #draw-canvas.is-active {
+      pointer-events: auto;       /* 그리기 모드에서만 입력 받음 */
+      cursor: crosshair;
+    }
+    #draw-toolbar {
+      position: fixed;
+      left: 50%;
+      bottom: 16px;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 94vw;
+      padding: 8px 12px;
+      background: #ffffff;
+      border: 1px solid #e1e4e8;
+      border-radius: 14px;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, .18);
+      z-index: 60;
+    }
+    #draw-toolbar .dt-group {
+      display: flex; align-items: center; gap: 6px;
+      padding-right: 10px; border-right: 1px solid #eee;
+    }
+    #draw-toolbar .dt-group:last-child { border-right: 0; padding-right: 0; }
+    #draw-toolbar button {
+      min-width: 32px; height: 32px;
+      padding: 0 6px;
+      font-size: 15px; line-height: 1;
+      background: #f4f6f8; color: #333;
+      border: 1px solid #e1e4e8; border-radius: 8px;
+      cursor: pointer;
+    }
+    #draw-toolbar button:hover { background: #eaeef1; }
+    #draw-toolbar button.is-on { background: #42b983; color: #fff; border-color: #42b983; }
+    #draw-toolbar .dt-color {
+      width: 24px; height: 24px; min-width: 24px;
+      padding: 0; border-radius: 50%; border: 2px solid #fff;
+      box-shadow: 0 0 0 1px #ccc;
+    }
+    #draw-toolbar .dt-color.is-on { box-shadow: 0 0 0 2px #42b983; }
   </style>
 </head>
 <body>
@@ -124,7 +176,35 @@
     <button id="font-dec" class="font-btn small" title="글씨 작게">A−</button>
     <button id="font-inc" class="font-btn" title="글씨 크게">A+</button>
     <button id="reader-toggle" title="연속 읽기(폴더 그룹 단위 3문서 이어보기) 켜기/끄기">📖 연속</button>
+    <button id="draw-toggle" title="문서 위에 펜으로 필기">✏️ 그리기</button>
     <button id="clear-cache" title="캐시·스토리지를 비우고 새로고침합니다">🗑 캐시</button>
+  </div>
+
+  <!-- 그리기 툴바 (그리기 모드일 때만 표시) -->
+  <div id="draw-toolbar" hidden>
+    <div class="dt-group">
+      <button data-draw-tool="pen" class="dt-tool is-on" title="펜">✏️</button>
+      <button data-draw-tool="hl" class="dt-tool" title="형광펜">🖍️</button>
+      <button data-draw-tool="eraser" class="dt-tool" title="지우개">🧽</button>
+    </div>
+    <div class="dt-group">
+      <button class="dt-color is-on" data-draw-color="#e23b3b" style="background:#e23b3b" title="빨강"></button>
+      <button class="dt-color" data-draw-color="#2b6cff" style="background:#2b6cff" title="파랑"></button>
+      <button class="dt-color" data-draw-color="#2bb673" style="background:#2bb673" title="초록"></button>
+      <button class="dt-color" data-draw-color="#f5a623" style="background:#f5a623" title="노랑"></button>
+      <button class="dt-color" data-draw-color="#222222" style="background:#222" title="검정"></button>
+    </div>
+    <div class="dt-group">
+      <button data-draw-size="2" class="dt-size" title="가늘게">˙</button>
+      <button data-draw-size="4" class="dt-size is-on" title="보통">•</button>
+      <button data-draw-size="8" class="dt-size" title="굵게">●</button>
+    </div>
+    <div class="dt-group">
+      <button id="dt-undo" title="실행취소">↩</button>
+      <button id="dt-clear" title="이 문서 주석 지우기">🗑</button>
+      <button id="dt-png" title="PNG로 저장">💾</button>
+      <button id="dt-close" title="그리기 닫기">✕</button>
+    </div>
   </div>
 
   <script>
@@ -175,8 +255,9 @@
       ]
     }
   </script>
-  <!-- 연속 읽기 플러그인 (docsify 로드 전에 등록) -->
+  <!-- 연속 읽기 · 펜 주석 플러그인 (docsify 로드 전에 등록) -->
   <script src="assets/reader.js"></script>
+  <script src="assets/draw.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/docsify@4"></script>
   <script src="https://cdn.jsdelivr.net/npm/docsify@4/lib/plugins/search.min.js"></script>
   <!-- KaTeX: 인라인 $...$ , 디스플레이 $$...$$ 렌더 (markdown 파싱 전 수식 보호) -->
