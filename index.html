@@ -253,12 +253,18 @@
         if (t.id === 'font-dec') { setFont(getFont() - 1); return; }
         if (t.id === 'clear-cache') {
           t.disabled = true; t.textContent = '비우는 중…';
-          var keepFont = null;
-          try { keepFont = localStorage.getItem('md-font'); } catch (e) {}
+          // 글씨 크기 + 필기(draw:*)는 보존하고 나머지만 비운다
+          var keep = {};
+          try {
+            for (var i = 0; i < localStorage.length; i++) {
+              var k = localStorage.key(i);
+              if (k === 'md-font' || k.indexOf('draw:') === 0) keep[k] = localStorage.getItem(k);
+            }
+          } catch (e) {}
           try {
             try { localStorage.clear(); } catch (e) {}
             try { sessionStorage.clear(); } catch (e) {}
-            if (keepFont) { try { localStorage.setItem('md-font', keepFont); } catch (e) {} }
+            try { Object.keys(keep).forEach(function (k) { localStorage.setItem(k, keep[k]); }); } catch (e) {}
             if (window.caches && caches.keys) {
               var keys = await caches.keys();
               await Promise.all(keys.map(function (k) { return caches.delete(k); }));
