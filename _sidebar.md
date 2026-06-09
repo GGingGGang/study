@@ -18,6 +18,7 @@
   - [14주 2강 — 범주형 자료 검정: 적합도 검정 · 독립성 검정](notes/통계/14w2.md)
 
 - 수학
+  - [그린정리 (Green's Theorem)](notes/math/00-그린정리.md)
   - [면적분 (Surface Integrals)](notes/math/01-면적분.md)
   - [회전 · 발산 · 발산정리 (Curl, Divergence, Divergence Theorem)](notes/math/02-회전-발산-발산정리.md)
   - [Stokes 정리 (Stokes' Theorem)](notes/math/03-stokes정리.md)
