@@ -10,6 +10,7 @@
   - [통합 정리 (전체)](notes/과학명저/00-통합정리.md)
 
 - 네트워크 보안
+  - [📌 보안 총정리 (TCP · DNS · SDN)](notes/network_security/00-보안총정리.md)
   - [Ch6 — TCP and Attacks](notes/network_security/06-TCP-공격.md)
   - [Ch7 — DNS and Attacks](notes/network_security/07-DNS-공격.md)
   - [Ch13 — SDN (Software-Defined Networking)](notes/network_security/13-SDN.md)
