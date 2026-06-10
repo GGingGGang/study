@@ -25,16 +25,23 @@
 
   function scrollToId() {
     var raw = idFromHash();
-    if (!raw) return;
+    if (!raw) { window.scrollTo(0, 0); return; }   // 헤딩 지정 없음 → 문서 최상단
     var el = findEl(raw);
-    if (!el) return;
+    if (!el) { window.scrollTo(0, 0); return; }     // id 못 찾음 → 최상단
     var y = el.getBoundingClientRect().top + window.pageYOffset - OFFSET;
     window.scrollTo(0, y);
   }
 
   // 라우트 렌더 후/해시 변경 후, 레이아웃·수식 렌더가 끝나며 위치가 바뀔 수 있어 여러 번 시도
   function scrollSoon() {
-    [0, 60, 200].forEach(function (t) { setTimeout(scrollToId, t); });
+    if (idFromHash()) {
+      // 특정 헤딩으로 이동: 렌더 후 위치 보정 위해 여러 번
+      [0, 60, 200].forEach(function (t) { setTimeout(scrollToId, t); });
+    } else {
+      // 문서 전환: 무조건 맨 위로
+      setTimeout(function () { window.scrollTo(0, 0); }, 0);
+      setTimeout(function () { window.scrollTo(0, 0); }, 50);
+    }
   }
 
   window.addEventListener('hashchange', scrollSoon);
