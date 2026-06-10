@@ -1,18 +1,4 @@
 - [홈](/)
-- [시작하기](notes/getting-started.md)
-
-- 과학명저 — 코스모스
-  - [1~2장 (우주와 생명)](notes/과학명저/01-코스모스-1-2장.md)
-  - [3~4장 (우주관 · 지구)](notes/과학명저/02-코스모스-3-4장.md)
-  - [5~6장 (태양계 탐사)](notes/과학명저/03-코스모스-5-6장.md)
-  - [9~10장 (별의 삶과 죽음 · 우주의 시작과 끝)](notes/과학명저/04-코스모스-9-10장.md)
-  - [11장 (미래로 띄운 편지)](notes/과학명저/05-코스모스-11장.md)
-  - [통합 정리 (전체)](notes/과학명저/00-통합정리.md)
-
-- 네트워크 보안
-  - [Ch6 — TCP and Attacks](notes/network_security/06-TCP-공격.md)
-  - [Ch7 — DNS and Attacks](notes/network_security/07-DNS-공격.md)
-  - [Ch13 — SDN (Software-Defined Networking)](notes/network_security/13-SDN.md)
 
 - 쿠버네티스 · 아키텍처 기준
   - [00 — 일반 아키텍처 (MSA·플랫폼)](notes/kubernetes/00-아키텍처-일반.md)
@@ -53,3 +39,50 @@
   - [25 — kubectl 치트시트](notes/kubernetes/25-실전-kubectl-치트시트.md)
   - [26 — 트러블슈팅 플레이북](notes/kubernetes/26-실전-트러블슈팅-플레이북.md)
   - [27 — 면접 예상질문](notes/kubernetes/27-실전-면접-예상질문.md)
+
+- 플랫폼 로드맵 · 기반 (Fundamentals)
+  - [01 — Kubernetes (컨트롤플레인·워크로드·OKE 제약)](notes/fundamentals/01-kubernetes.md)
+  - [02 — Helm (Chart·3-way merge·ArgoCD 결합)](notes/fundamentals/02-helm.md)
+
+- 플랫폼 로드맵 · Phase 2 — 쿠버네티스 기반
+  - [01 — Gateway API (3-tier·canary·TLS)](notes/phase-2/01-gateway-api.md)
+  - [02 — Istio (Ambient·HBONE·SPIFFE mTLS)](notes/phase-2/02-istio.md)
+  - [03 — cert-manager (ACME DNS-01·ClusterIssuer)](notes/phase-2/03-cert-manager.md)
+  - [04 — external-dns (TXT registry·Cloudflare)](notes/phase-2/04-external-dns.md)
+  - [05 — RBAC (deny by default·SA Token)](notes/phase-2/05-rbac.md)
+
+- 플랫폼 로드맵 · Phase 3 — CI/CD
+  - [01 — ArgoCD (GitOps·ApplicationSet·sync wave)](notes/phase-3/01-argocd.md)
+  - [02 — Jenkins (동적 agent·ARM64·JCasC)](notes/phase-3/02-jenkins.md)
+  - [03 — GHCR (multi-arch·SHA 태그·cosign)](notes/phase-3/03-ghcr.md)
+
+- 플랫폼 로드맵 · Phase 4 — 모니터링
+  - [01 — kube-prometheus-stack (Operator·PromQL)](notes/phase-4/01-kube-prometheus-stack.md)
+  - [02 — Thanos (downsampling·장기 보관)](notes/phase-4/02-thanos.md)
+  - [03 — Loki·Alloy (LogQL·라벨 인덱싱)](notes/phase-4/03-loki-alloy.md)
+  - [04 — Tempo (OTLP·분산 트레이싱)](notes/phase-4/04-tempo.md)
+  - [05 — Kiali (메시 토폴로지·mTLS 시각화)](notes/phase-4/05-kiali.md)
+
+- 플랫폼 로드맵 · Phase 5 — 애플리케이션 인프라
+  - [01 — Strimzi Kafka (KRaft·declarative)](notes/phase-5/01-strimzi-kafka.md)
+  - [02 — Redis (AOF·Valkey·rate limit)](notes/phase-5/02-redis.md)
+  - [03 — HPA·Prometheus Adapter (커스텀 메트릭)](notes/phase-5/03-hpa-prometheus-adapter.md)
+  - [04 — Pod 패턴 (프로브·graceful shutdown·PDB)](notes/phase-5/04-pod-patterns.md)
+  - [05 — Dockerfile 표준 (distroless·non-root·SBOM)](notes/phase-5/05-dockerfile-standards.md)
+
+- 플랫폼 로드맵 · Phase 6 — 보안
+  - [01 — Vault·OpenBao (Agent Injector·dynamic secret)](notes/phase-6/01-vault-openbao.md)
+  - [02 — Istio mTLS (STRICT 전환·AuthorizationPolicy)](notes/phase-6/02-istio-mtls.md)
+  - [03 — Cilium chaining (eBPF·NetworkPolicy·Hubble)](notes/phase-6/03-cilium-chaining.md)
+  - [04 — NetworkPolicy (default-deny·audit mode)](notes/phase-6/04-networkpolicy.md)
+  - [05 — Trivy (5종 스캔·fix-available 차단)](notes/phase-6/05-trivy.md)
+  - [06 — PSA (restricted 프로파일)](notes/phase-6/06-psa.md)
+  - [07 — Kyverno·cosign (verifyImages·keyless)](notes/phase-6/07-kyverno-cosign.md)
+  - [08 — 알림 (SLO·burn rate·runbook)](notes/phase-6/08-alerting.md)
+  - [09 — k6 (부하 테스트·threshold)](notes/phase-6/09-k6.md)
+
+- 플랫폼 로드맵 · Phase 7 — DR
+  - [01 — HeatWave 백업 (PITR·삭제 보호)](notes/phase-7/01-heatwave-backup.md)
+  - [02 — Block Volume 백업 (한도·tag 자동연결)](notes/phase-7/02-block-volume-backup.md)
+  - [03 — Velero (S3 호환·CSI snapshot)](notes/phase-7/03-velero.md)
+  - [04 — Vault 스냅샷 (Raft·CronJob)](notes/phase-7/04-vault-snapshot.md)
