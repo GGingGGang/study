@@ -110,3 +110,42 @@
   - [02 — Block Volume 백업 (한도·tag 자동연결)](notes/phase-7/02-block-volume-backup.md)
   - [03 — Velero (S3 호환·CSI snapshot)](notes/phase-7/03-velero.md)
   - [04 — Vault 스냅샷 (Raft·CronJob)](notes/phase-7/04-vault-snapshot.md)
+
+- 알고리즘 · 시작과 기초
+  - [00 — 코딩테스트 시작하기 (저지·티어·로드맵)](notes/algorithm/00-코테-시작하기.md)
+  - [01 — 입출력과 시간 관리 (sys.stdin·출력 병목)](notes/algorithm/01-입출력과-시간관리.md)
+  - [02 — 파이썬 자료형과 연산 (음수 나눗셈·비트)](notes/algorithm/02-파이썬-자료형과-연산.md)
+  - [03 — 리스트와 문자열 다루기 (얕은 복사·정렬 key)](notes/algorithm/03-리스트와-문자열-다루기.md)
+  - [04 — 시간복잡도와 빅오 (입력 크기 역산)](notes/algorithm/04-시간복잡도와-빅오.md)
+  - [05 — 내장함수와 표준 라이브러리 (collections·heapq)](notes/algorithm/05-내장함수와-표준라이브러리.md)
+
+- 알고리즘 · 자료구조
+  - [06 — 스택·큐·덱 (모노톤 스택·단조 덱)](notes/algorithm/06-스택과-큐-덱.md)
+  - [07 — 해시·집합·딕셔너리 (Counter·defaultdict)](notes/algorithm/07-해시-집합-딕셔너리.md)
+  - [08 — 정렬 (Timsort·다중 키·좌표 압축)](notes/algorithm/08-정렬.md)
+  - [09 — 이분 탐색과 투 포인터 (매개변수 탐색)](notes/algorithm/09-이분탐색과-투포인터.md)
+  - [10 — 누적합과 구간 처리 (2D 누적합·차분 배열)](notes/algorithm/10-누적합과-구간처리.md)
+
+- 알고리즘 · 그래프
+  - [11 — 그래프 표현과 순회 (DFS·BFS·격자)](notes/algorithm/11-그래프-표현과-순회.md)
+  - [12 — 최단 경로 (다익스트라·벨만포드·플로이드)](notes/algorithm/12-최단경로.md)
+  - [13 — 트리와 union-find (MST·크루스칼)](notes/algorithm/13-트리와-union-find.md)
+  - [14 — 위상 정렬과 DAG (Kahn·DAG 위의 DP)](notes/algorithm/14-위상정렬과-DAG.md)
+  - [15 — 그래프 심화 (SCC·2-SAT·이분 매칭)](notes/algorithm/15-그래프-심화-SCC와-이분매칭.md)
+
+- 알고리즘 · 문제풀이 패턴
+  - [16 — 완전탐색과 백트래킹 (비트마스크·가지치기)](notes/algorithm/16-완전탐색과-백트래킹.md)
+  - [17 — DP 기초 (배낭·LIS·LCS)](notes/algorithm/17-DP-기초.md)
+  - [18 — DP 심화 (비트마스크 DP·트리 DP·최적화)](notes/algorithm/18-DP-심화.md)
+  - [26 — 그리디와 스위핑 (교환 논법·이벤트 정렬)](notes/algorithm/26-그리디와-스위핑.md)
+
+- 알고리즘 · 고급 (플래티넘 구간)
+  - [19 — 문자열 알고리즘 (KMP·트라이·해싱)](notes/algorithm/19-문자열-알고리즘.md)
+  - [20 — 수학과 기하 (정수론·CCW·볼록 껍질)](notes/algorithm/20-수학과-기하.md)
+  - [21 — 세그먼트 트리와 펜윅 트리 (lazy propagation)](notes/algorithm/21-세그먼트트리와-펜윅트리.md)
+  - [22 — LCA와 트리 쿼리 (희소 배열·오일러 투어)](notes/algorithm/22-LCA와-트리쿼리.md)
+
+- 알고리즘 · 검증과 실전
+  - [23 — 로컬 테스트 환경 (리다이렉션·러너 스크립트)](notes/algorithm/23-로컬-테스트-환경.md)
+  - [24 — 반례 찾기와 스트레스 테스트 (생성기·브루트포스)](notes/algorithm/24-반례찾기와-스트레스테스트.md)
+  - [25 — 복잡도 추정과 제출 전 체크리스트 (TLE 대응)](notes/algorithm/25-복잡도-추정과-제출전-체크리스트.md)
