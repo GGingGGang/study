@@ -1,0 +1,27 @@
+.sidebar-nav details > summary {
+  cursor: pointer;
+  padding: 7px 4px;
+  font-weight: 600;
+  line-height: 1.5;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.sidebar-nav details > summary::marker {
+  color: #42b983;
+}
+
+.sidebar-nav details > summary:focus-visible {
+  outline: 2px solid #42b983;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.sidebar-nav details[open] > summary {
+  color: #23845a;
+}
+
+.sidebar-nav details > ul {
+  margin: 0 0 6px;
+  padding-left: 16px;
+}
