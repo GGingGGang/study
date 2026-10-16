@@ -1,4 +1,12 @@
 * [홈](/)
+* OCI Kubernetes 면접 준비
+
+  * [00 — 기술 스택과 분석 범위](notes/oci-interview/00-overview.md)
+  * [01 — 인프라·플랫폼·CI/CD 파이프라인](notes/oci-interview/01-pipelines.md)
+  * [02 — 필수 사전 지식](notes/oci-interview/02-prerequisites.md)
+  * [03 — 데이터 흐름 그래프](notes/oci-interview/03-data-flows.md)
+  * [04 — 면접 질문과 설명 연습](notes/oci-interview/04-interview.md)
+
 * 리눅스 교과서
 
   * [00 — 학습 안내와 전체 목차](notes/linux/00-학습안내.md)
