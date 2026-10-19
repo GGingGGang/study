@@ -1,5 +1,40 @@
 * [홈](/)
 
+* 시험 요약
+
+  * [00 — 네 과목 학습 안내](notes/exam/README.md)
+
+  * 국제협상론
+
+    * [핵심 정리](notes/exam/국제협상론_핵심정리.md)
+    * [10강 통합 요약](notes/exam/국제협상론_통합요약.md)
+    * [사례 모음](notes/exam/국제협상론_사례_모음.md)
+    * [확인 필요 목록](notes/exam/국제협상론_확인필요.md)
+
+  * 컴퓨터비전
+
+    * [핵심 정리](notes/exam/컴퓨터비전_핵심정리.md)
+    * [25강 통합 요약](notes/exam/컴퓨터비전_통합요약.md)
+    * [이론과 공식 모음](notes/exam/컴퓨터비전_이론공식_모음.md)
+    * [확인 필요 목록](notes/exam/컴퓨터비전_확인필요.md)
+
+  * 클라우드보안
+
+    * [핵심 정리](notes/exam/클라우드보안_핵심정리.md)
+    * [6강 통합 요약](notes/exam/클라우드보안_통합요약.md)
+    * [이론과 구조 모음](notes/exam/클라우드보안_이론공식_모음.md)
+    * [확인 필요 목록](notes/exam/클라우드보안_확인필요.md)
+
+  * 과학기술과 인간의 대화
+
+    * [인물과 내용 통합 요약](notes/exam/과학기술의인간의대화_통합요약.md)
+
+  * 공통 복습
+
+    * [SRT 세 과목 핵심 정리](notes/exam/전체_핵심정리.md)
+    * [SRT 세 과목 전체 통합본](notes/exam/전체_통합요약.md)
+    * [교수 강조 표현 원문](notes/exam/교수강조_원문모음.md)
+
 * OCI Kubernetes 면접 준비
 
   * [00 — 기술 스택과 분석 범위](notes/oci-interview/00-overview.md)
